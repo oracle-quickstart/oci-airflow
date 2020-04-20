@@ -280,7 +280,7 @@ python3 -m pip install gunicorn==19.9.0
 log "->InitDB"
 airflow initdb >> $LOG_FILE
 log "->Configure MySQL connection"
-sed -i 's/sqlite:\/\/\/\/opt\/airflow\/airflow.db/mysql:\/\/airflow:airflow@locahost\/airflow/g' /opt/airflow/airflow.cfg >> $LOG_FILE
+sed -i 's/sqlite:\/\/\/\/opt\/airflow\/airflow.db/mysql:\/\/airflow:airflow@127.0.0.1\/AIRFLOW/g' /opt/airflow/airflow.cfg >> $LOG_FILE
 log "->InitDB MySQL"
 airflow initdb >> $LOG_FILE
 log "->SystemD setup"
