@@ -1,1 +1,1 @@
-output "AIRFLOW-WEBSERVER-IP" { value = "http://${modules.master.airflow-public-ip}:8080" }
+output "AIRFLOW-WEBSERVER-IP" { value = "http://${module.master.airflow-public-ip}:8080" }
