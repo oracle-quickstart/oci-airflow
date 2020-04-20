@@ -1,0 +1,6 @@
+ERROR: google-auth 1.14.0 has requirement setuptools>=40.3.0, but you'll have setuptools 39.2.0 which is incompatible.
+ERROR: botocore 1.14.17 has requirement docutils<0.16,>=0.10, but you'll have docutils 0.16 which is incompatible.
+ERROR: boto3 1.12.41 has requirement botocore<1.16.0,>=1.15.41, but you'll have botocore 1.14.17 which is incompatible.
+ERROR: snowflake-connector-python 2.2.4 has requirement boto3<1.12,>=1.4.4, but you'll have boto3 1.12.41 which is incompatible.
+ERROR: moto 1.3.14 has requirement idna<2.9,>=2.5, but you'll have idna 2.9 which is incompatible.
+ERROR: astroid 2.3.3 has requirement wrapt==1.11.*, but you'll have wrapt 1.12.1 which is incompatible.

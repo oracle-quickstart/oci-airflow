@@ -1,0 +1,11 @@
+DEPRECATION: Python 2.7 reached the end of its life on January 1st, 2020. Please upgrade your Python as Python 2.7 is no longer maintained. A future version of pip will drop support for Python 2.7. More details about Python 2 support in pip, can be found at https://pip.pypa.io/en/latest/development/release-process/#python-2-support
+    ERROR: Command errored out with exit status 1:
+     command: /usr/bin/python2 -c 'import sys, setuptools, tokenize; sys.argv[0] = '"'"'/tmp/pip-install-0u3511/flask-appbuilder/setup.py'"'"'; __file__='"'"'/tmp/pip-install-0u3511/flask-appbuilder/setup.py'"'"';f=getattr(tokenize, '"'"'open'"'"', open)(__file__);code=f.read().replace('"'"'\r\n'"'"', '"'"'\n'"'"');f.close();exec(compile(code, __file__, '"'"'exec'"'"'))' egg_info --egg-base /tmp/pip-install-0u3511/flask-appbuilder/pip-egg-info
+         cwd: /tmp/pip-install-0u3511/flask-appbuilder/
+    Complete output (3 lines):
+    /usr/lib64/python2.7/distutils/dist.py:267: UserWarning: Unknown distribution option: 'long_description_content_type'
+      warnings.warn(msg)
+    error in Flask-AppBuilder setup command: 'install_requires' must be a string or list of strings containing valid project/version requirement specifiers
+    ----------------------------------------
+ERROR: Command errored out with exit status 1: python setup.py egg_info Check the logs for full command output.
+
