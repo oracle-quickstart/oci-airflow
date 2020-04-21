@@ -13,7 +13,42 @@ variable "image_ocid" {}
 variable "hide_private_subnet" {
   default = "true"
 }
+variable "airflow_options" {}
 variable "executor" {}
+variable "all" {}
+variable "all_dbs" {}
+variable "async" {}
+variable "aws" {}
+variable "azure" {}
+variable "celery" {}
+variable "cloudant" {}
+variable "crypto" {}
+variable "devel" {}
+variable "devel_hadoop" {}
+variable "druid" {}
+variable "gcp" {}
+variable "github_enterprise" {}
+variable "google_auth" {}
+variable "hashicorp" {}
+variable "hdfs" {}
+variable "hive" {}
+variable "jdbc" {}
+variable "kerberos" {}
+variable "kubernetes" {}
+variable "ldap" {}
+variable "mssql" {}
+variable "mysql" {}
+variable "oracle" {}
+variable "password" {}
+variable "postgres" {}
+variable "presto" {}
+variable "qds" {}
+variable "rabbitmq" {}
+variable "redis" {}
+variable "samba" {}
+variable "slack" {}
+variable "ssh" {}
+variable "vertica" {}
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Optional variables

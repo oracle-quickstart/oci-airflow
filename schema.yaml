@@ -382,12 +382,12 @@ variables:
   mysql:
     type: boolean
     title: "mysql"
-    default: "false"
+    default: "true"
 
   oracle:
     type: boolean
     title: "oracle"
-    default: "false"
+    default: "true"
 
   password:
     type: boolean
@@ -432,7 +432,7 @@ variables:
   ssh:
     type: boolean
     title: "ssh"
-    default: "false"
+    default: "true"
 
   vertica:
     type: boolean
