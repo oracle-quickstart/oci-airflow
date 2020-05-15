@@ -277,6 +277,7 @@ else
 fi
 python3 -m pip install "apache-airflow[mysql]"
 python3 -m pip install gunicorn==19.9.0
+python3 -m pip install oci
 log "->InitDB"
 airflow initdb >> $LOG_FILE
 log "->Configure MySQL connection"
@@ -383,9 +384,20 @@ AIRFLOW_CONFIG=/opt/airflow/airflow.cfg
 AIRFLOW_HOME=/opt/airflow/
 EOF
 mkdir -p /run/airflow
+mkdir -p /opt/airflow/plugins/hooks
+mkdir -p /opt/airflow/plugins/operators
 useradd -s /sbin/nologin airflow
-chown -R airflow:airflow /opt/airflow
 chown -R airflow:airflow /run/airflow
+log "->Download OCI Hooks & Operators"
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_base.py -O /opt/airflow/plugins/hooks/oci_base.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_object_storage.py -O /opt/airflow/plugins/hooks/oci_object_storage.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_data_flow.py -O /opt/airflow/plugins/hooks/oci_data_flow.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_object_storage.py -O /opt/airflow/plugins/operators/oci_object_storage.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection_form.js -O /usr/local/lib/python3.6/site-packages/airflow/www/static/connection_form.js
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection.py -O /usr/local/lib/python3.6/site-packages/airflow/models/connection.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/www_rbac_views.py -O /usr/local/lib/python3.6/site-packages/airflow/www_rbac/views.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/www_views.py -O /usr/local/lib/python3.6/site-packages/airflow/www/views.py
+chown -R airflow:airflow /opt/airflow
 log "->Start Scheduler"
 systemctl start airflow-scheduler
 log "->Start Webserver"
