@@ -19,11 +19,11 @@
 This module contains Base Oracle Cloud Infrastructure (OCI) Hook.
 """
 from os import path
-
+from typing import Optional
 import oci
-
 from airflow.exceptions import AirflowException
 from airflow.hooks.base_hook import BaseHook
+
 
 class OCIBaseHook(BaseHook):
     """
@@ -45,7 +45,10 @@ class OCIBaseHook(BaseHook):
     Fallback to Instance Principals if not using config files or passed parameters
     """
 
-    def __init__(self, oci_conn_id="oci_default", verify=None):
+    def __init__(self,
+                 oci_conn_id: Optional[str] = "oci_default",
+                 verify: Optional[bool] = None
+    ):
        super(OCIBaseHook, self).__init__(oci_conn_id)
        self.oci_conn_id = oci_conn_id
        self.config = None
@@ -57,13 +60,26 @@ class OCIBaseHook(BaseHook):
         try:
             connection_object = self.get_connection(self.oci_conn_id)
             extra_config = connection_object.extra_dejson
-            if "config_path" in extra_config:
+            if "extra__oci" in extra_config:
+                self.config = {
+                    "log_requests": False,
+                    "additional_user_agent": '',
+                    "pass_phrase": None,
+                    "user": connection_object.login,
+                    "fingerprint": extra_config["extra__oci__fingerprint"],
+                    "key_file": extra_config["extra__oci__key_file"],
+                    "tenancy": extra_config["extra__oci__tenancy"],
+                    "region": extra_config["extra__oci__region"]
+                }
+                self.client_kwargs = dict()
+            elif "config_path" in extra_config:
                 if path.exists(extra_config["config_path"]) is True:
                     self.config = oci.config.from_file(extra_config["config_path"])
                     self.client_kwargs = dict()
                 else:
                     raise AirflowException('Config Path %s not found' % extra_config["config_path"])
             else:
+                print("Failed to find valid oci config in Airflow, falling back to Instance Principals")
                 self.signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
                 self.client_kwargs["signer"] = self.signer
                 self.config = {
@@ -71,10 +87,7 @@ class OCIBaseHook(BaseHook):
                     "region": self.signer.region,
                 }
         except AirflowException:
-            self.log.warning("Unable to use Airflow Connection for credentials")
-            self.log.info("Fallback on default OCI credential path")
-            self.config = oci.config.from_file()
-            self.client_kwargs = dict()
+            self.log.error("All attempts to get valid configuration failed")
         return self.config, self.client_kwargs
 
     def validate_config(self):
@@ -89,3 +102,6 @@ class OCIBaseHook(BaseHook):
     def get_client(self, client_class):
         client, client_kwargs = self.get_config()
         return client_class(client, **client_kwargs)
+
+
+

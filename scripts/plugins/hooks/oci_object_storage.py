@@ -57,7 +57,7 @@ class OCIObjectStorageHook(OCIBaseHook):
         :rtype: str
         """
         try:
-            namespace_name = self.get_client(self.oci_client).get_namespace(compartment_id).data
+            namespace_name = self.get_client(self.oci_client).get_namespace(compartment_id=self.compartment_id).data
             return namespace_name
         except AirflowException as e:
             self.log.error(e.response["Error"]["Message"])
@@ -125,3 +125,10 @@ class OCIObjectStorageHook(OCIBaseHook):
                                                         **kwargs)
         except AirflowException as e:
             self.log.error(e.response["Error"]["Message"])
+
+
+
+
+
+
+

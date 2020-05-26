@@ -21,7 +21,49 @@ This module contains OCI Object Storage Operator.
 from airflow.models.baseoperator import BaseOperator
 from hooks.oci_object_storage import OCIObjectStorageHook
 from airflow.utils.decorators import apply_defaults
+from airflow.exceptions import AirflowException
 import oci
+
+
+class MakeBucket(BaseOperator):
+    """
+    Create a Bucket
+    """
+
+    @apply_defaults
+    def __init__(
+        self,
+        bucket_name: str,
+        compartment_ocid: str,
+        oci_conn_id: str,
+        *args,
+        **kwargs
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.bucket_name = bucket_name
+        self.compartment_id = compartment_ocid
+        self.oci_conn_id = oci_conn_id
+        self._oci_hook = None
+        self._oci_storage_hook = None
+
+    def execute(self, context):
+        self._oci_hook = OCIObjectStorageHook(compartment_id=self.compartment_id, bucket_name=self.bucket_name,
+                                              oci_conn_id=self.oci_conn_id)
+        client = self._oci_hook.get_client(oci.object_storage.ObjectStorageClient)
+        self.log.info("Validating OCI Config")
+        self._oci_hook.validate_config()
+        namespace = self._oci_hook.get_namespace()
+        details = oci.object_storage.models.CreateBucketDetails(
+            compartment_id=self.compartment_id, name=self.bucket_name
+        )
+        self.log.info("Checking if Bucket {} exists".format(self.bucket_name))
+        bucket_exists = self._oci_hook.check_for_bucket(namespace_name=namespace, bucket_name=self.bucket_name)
+        if bucket_exists is True:
+            self.log.info("Bucket {0} exists, skipping creation".format(self.bucket_name))
+        else:
+            self.log.info("Creating Bucket {0} in {1}".format(self.bucket_name, namespace))
+            client.create_bucket(namespace_name=namespace, create_bucket_details=details)
+            self.log.info("Create bucket complete")
 
 
 class CopyToOCIObjectStorageOperator(BaseOperator):
@@ -33,7 +75,7 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
     def __init__(
         self,
         bucket_name: str,
-        compartment_id: str,
+        compartment_ocid: str,
         oci_conn_id: str,
         object_name: str,
         put_object_body: str,
@@ -42,7 +84,7 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
     ) -> None:
         super().__init__(*args, **kwargs)
         self.bucket_name = bucket_name
-        self.compartment_id = compartment_id
+        self.compartment_id = compartment_ocid
         self.oci_conn_id = oci_conn_id
         self.object_name = object_name
         self.put_object_body = put_object_body
@@ -76,3 +118,44 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
             self.log.info("Copying {0} to {1}".format(self.object_name, self.bucket_name))
             self._oci_hook.copy_to_bucket(bucket_name=self.bucket_name, namespace_name=namespace,
                                           object_name=self.object_name, put_object_body=self.put_object_body)
+
+
+class CopyFromOCIObjectStorage(BaseOperator):
+    """
+    Copy from OCI Object Storage
+    """
+    @apply_defaults
+    def __init__(
+        self,
+        bucket_name: str,
+        compartment_id: str,
+        oci_conn_id: str,
+        object_name: str,
+        *args,
+        **kwargs
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.bucket_name = bucket_name
+        self.compartment_id = compartment_id
+        self.oci_conn_id = oci_conn_id
+        self.object_name = object_name
+        self._oci_hook = None
+        self._oci_storage_hook = None
+
+    def execute(self, context):
+        self._oci_hook = OCIObjectStorageHook(compartment_id=self.compartment_id, bucket_name=self.bucket_name,
+                                              oci_conn_id=self.oci_conn_id)
+        client = self._oci_hook.get_client(oci.object_storage.ObjectStorageClient)
+        self.log.info("Validating OCI Config")
+        self._oci_hook.validate_config()
+        namespace = self._oci_hook.get_namespace()
+        self.log.info("Checking if {0} exists in {1}".format(self.object_name, self.bucket_name))
+        object_exists = self._oci_hook.check_for_object(namespace_name=namespace, bucket_name=self.bucket_name,
+                                                        object_name=self.object_name)
+        if object_exists is True:
+            self.log.info("Reading {0} from {1}".format(self.object_name, self.bucket_name))
+            return client.get_object(namespace_name=namespace, object_name=self.object_name,
+                                     bucket_name=self.bucket_name)
+        else:
+            raise AirflowException("{0} does not exist in {1}".format(self.object_name, self.bucket_name))
+
