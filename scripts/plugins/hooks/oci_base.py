@@ -60,7 +60,7 @@ class OCIBaseHook(BaseHook):
         try:
             connection_object = self.get_connection(self.oci_conn_id)
             extra_config = connection_object.extra_dejson
-            if "extra__oci" in extra_config:
+            if "extra__oci__tenancy" in extra_config:
                 self.config = {
                     "log_requests": False,
                     "additional_user_agent": '',
