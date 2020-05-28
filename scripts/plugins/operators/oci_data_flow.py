@@ -104,8 +104,8 @@ class OCIDataFlowRun(BaseOperator):
         if not self.warehouse_bucket_uri:
             self.namespace = OCIObjectStorageHook(compartment_id=self.compartment_id, oci_conn_id=self.oci_conn_id, bucket_name=self.bucket_name).get_namespace()
             self.warehouse_bucket_uri = "oci://" + str(self.bucket_name) + "@" + str(self.namespace) + "/"
-        
-        self.application_id = OCIDataFlowHook(compartment_ocid=self.compartment_id, oci_conn_id=self.oci_conn_id, display_name=self.display_name).get_application_ocid()
+        if not self.application_id: 
+            self.application_id = OCIDataFlowHook(compartment_ocid=self.compartment_id, oci_conn_id=self.oci_conn_id, display_name=self.display_name).get_application_ocid()
         run_details = {
             "application_id": self.application_id,
             "compartment_id": self.compartment_id,
