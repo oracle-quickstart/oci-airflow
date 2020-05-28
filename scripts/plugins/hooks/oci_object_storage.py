@@ -21,6 +21,7 @@ This module contains OCI Object Storage Hook.
 import gzip as gz
 import io
 from airflow.utils.helpers import chunks
+from typing import Optional
 
 import oci
 from hooks.oci_base import OCIBaseHook
@@ -37,9 +38,9 @@ class OCIObjectStorageHook(OCIBaseHook):
     :type oci_conn_id: str
     """
     def __init__(self,
-                 bucket_name: str,
                  compartment_id: str,
                  oci_conn_id: str,
+                 bucket_name: str,
                  *args,
                  **kwargs):
         super(OCIObjectStorageHook, self).__init__(*args, **kwargs)
@@ -96,12 +97,16 @@ class OCIObjectStorageHook(OCIBaseHook):
             objectsummary = self.get_client(self.oci_client).list_objects(namespace_name=namespace_name,
                                                                           bucket_name=bucket_name)
             object_list = objectsummary.data
-            for object in object_list:
-                if object.name == object_name:
-                    return True
-                else:
-                    continue
-            return False
+            print("Object list: {0}".format(object_list))
+            if object_list.next_start_with is None:
+                return False
+            else:
+                for object in object_list:
+                    if object.name == object_name:
+                        return True
+                    else:
+                        continue
+                return False
         except AirflowException as e:
             self.log.error(e.response["Error"]["Message"])
 

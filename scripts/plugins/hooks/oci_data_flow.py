@@ -20,10 +20,10 @@ from typing import Optional
 import oci
 from hooks.oci_base import OCIBaseHook
 from airflow.exceptions import AirflowException
-
 """
 Get OCID by Name - Compartment ID, Application Name
 """
+
 
 class OCIDataFlowHook(OCIBaseHook):
     """
@@ -55,16 +55,31 @@ class OCIDataFlowHook(OCIBaseHook):
         self.spark_version = spark_version
         self.oci_client = oci.data_flow.DataFlowClient
 
-    def get_application_ocid(self, compartment_id, display_name):
+    def get_application_ocid(self, compartment_id=None, display_name=None):
         try:
-            appdetails = self.oci_client.list_applications(compartment_id=compartment_id,
-                                                           display_name=display_name).data
-            if appdetails.display_name == display_name:
-                return appdetails.id
-            else:
-                return None
+            appdetails = self.get_client(self.oci_client).list_applications(compartment_id=self.compartment_id).data
+            for app in appdetails:
+                if app.display_name == self.display_name:
+                    return app.id
+                else:
+                    continue
+            return None
         except AirflowException as e:
             self.log.error(e.response["Error"]["Message"])
+
+
+    def check_for_application_by_name(self, compartment_id=None, display_name=None):
+        try:
+            appdetails = self.get_client(self.oci_client).list_applications(compartment_id=self.compartment_id).data
+            for app in appdetails:
+                if app.display_name == self.display_name:
+                    return True
+                else:
+                    continue
+            return False
+        except AirflowException as e:
+            self.log.error(e.response["Error"]["Message"])
+
 
     def create_application_details(self):
         try:
