@@ -386,6 +386,8 @@ EOF
 mkdir -p /run/airflow
 mkdir -p /opt/airflow/plugins/hooks
 mkdir -p /opt/airflow/plugins/operators
+mkdir -p /opt/airflow/plugins/sensors
+mkdir -p /opt/airflow/dags
 useradd -s /sbin/nologin airflow
 chown -R airflow:airflow /run/airflow
 log "->Download OCI Hooks & Operators"
@@ -394,6 +396,9 @@ wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scri
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_data_flow.py -O /opt/airflow/plugins/hooks/oci_data_flow.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_object_storage.py -O /opt/airflow/plugins/operators/oci_object_storage.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_data_flow.py -O /opt/airflow/plugins/operators/oci_data_flow.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/sensors/oci_object_storage.py -O /opt/airflow/plugins/sensors/oci_object_storage.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/dags/oci_simple_example.py -O /opt/airflow/dags/oci_simple_example.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/dags/oci_advanced_example.py -O /opt/airflow/dags/oci_advanced_example.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection_form.js -O /usr/local/lib/python3.6/site-packages/airflow/www/static/connection_form.js
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection.py -O /usr/local/lib/python3.6/site-packages/airflow/models/connection.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/www_rbac_views.py -O /usr/local/lib/python3.6/site-packages/airflow/www_rbac/views.py
