@@ -1,5 +1,4 @@
-#
-# Licensed to the Apache Software Foundation (ASF) under one
+censed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
 # regarding copyright ownership.  The ASF licenses this file
@@ -15,32 +14,29 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""
-This module contains OCI Object Storage Hook.
-"""
-import gzip as gz
-import io
-from airflow.utils.helpers import chunks
-from typing import Optional
-
 import oci
+from typing import Optional
 from hooks.oci_base import OCIBaseHook
 from airflow.exceptions import AirflowException
+
 
 class OCIObjectStorageHook(OCIBaseHook):
     """
     Interact with OCI Object Storage
-    :param bucket_name: Target bucket name
-    :type bucket_name: str
+
     :param compartment_id: Target compartment OCID
     :type compartment_id: str
+    :param bucket_name: Target bucket name
+    :type bucket_name: str
     :param oci_conn_id: Airflow connection ID
     :type oci_conn_id: str
+    :param args: Additional arguments
+    :param kwargs: Additional arguments
     """
     def __init__(self,
                  compartment_id: str,
-                 oci_conn_id: str,
-                 bucket_name: str,
+                 bucket_name: Optional[str] = None,
+                 oci_conn_id: Optional[str] = "oci_default",
                  *args,
                  **kwargs):
         super(OCIObjectStorageHook, self).__init__(*args, **kwargs)
@@ -58,10 +54,11 @@ class OCIObjectStorageHook(OCIBaseHook):
         :rtype: str
         """
         try:
-            namespace_name = self.get_client(self.oci_client).get_namespace(compartment_id=self.compartment_id).data
-            return namespace_name
+            self.namespace_name = self.get_client(self.oci_client).get_namespace(compartment_id=self.compartment_id).data
+            return self.namespace_name
         except AirflowException as e:
             self.log.error(e.response["Error"]["Message"])
+
 
     def check_for_bucket(self, bucket_name=None, namespace_name=None):
         """
@@ -72,11 +69,11 @@ class OCIObjectStorageHook(OCIBaseHook):
         :rtype: bool
         """
         try:
-            bucketsummary = self.get_client(self.oci_client).list_buckets(namespace_name=namespace_name,
+            bucketsummary = self.get_client(self.oci_client).list_buckets(namespace_name=self.namespace_name,
                                                                           compartment_id=self.compartment_id)
             bucket_list = bucketsummary.data
             for bucket in bucket_list:
-                if bucket.name == bucket_name:
+                if bucket.name == self.bucket_name:
                     return True
                 else:
                     continue
@@ -84,7 +81,7 @@ class OCIObjectStorageHook(OCIBaseHook):
         except AirflowException as e:
             self.log.error(e.response["Error"]["Message"])
 
-    def check_for_object(self, bucket_name=None, namespace_name=None, object_name=None):
+    def check_for_object(self, bucket_name=None, namespace_name=None, object_name=None, **kwargs):
         """
         Check if Object exists in Bucket
         :param bucket_name: Target Bucket name
@@ -94,8 +91,8 @@ class OCIObjectStorageHook(OCIBaseHook):
         :rtype: bool
         """
         try:
-            objectsummary = self.get_client(self.oci_client).list_objects(namespace_name=namespace_name,
-                                                                          bucket_name=bucket_name)
+            objectsummary = self.get_client(self.oci_client).list_objects(namespace_name=self.namespace_name,
+                                                                          bucket_name=self.bucket_name, **kwargs)
             object_list = objectsummary.data
             print("Object list: {0}".format(object_list))
             if object_list.next_start_with is None:
@@ -113,27 +110,43 @@ class OCIObjectStorageHook(OCIBaseHook):
     def copy_to_bucket(self, bucket_name=None, namespace_name=None, put_object_body=None, object_name=None,
                        **kwargs):
         """
-        Copy Source Data to Bucket using put_object
-        :param bucket_name:
+        Copy source data to bucket using put_object
+        :param bucket_name: Target bucket
         :type bucket_name: str
-        :param namespace_name:
+        :param namespace_name: Namespace name
         :type namespace_name: str
         :param put_object_body: The object to upload to the object store
         :type put_object_body: stream
-        :param object_name: Name of Object to be created in Bucket
+        :param object_name: Name of object to be created in bucket
         :type object_name: str
-        :return:
+        :return: Response object with data type None
         """
         try:
-            self.get_client(self.oci_client).put_object(bucket_name=bucket_name, namespace_name=namespace_name,
+            self.get_client(self.oci_client).put_object(bucket_name=self.bucket_name, namespace_name=self.namespace_name,
                                                         put_object_body=put_object_body, object_name=object_name,
                                                         **kwargs)
         except AirflowException as e:
             self.log.error(e.response["Error"]["Message"])
 
-
-
-
-
-
+    def read_from_bucket(self, bucket_name=None, namespace_name=None, object_name=None, **kwargs):
+        """
+        Read object from bucket and return contents
+        :param bucket_name: Target bucket
+        :type bucket_name: str
+        :param namespace_name: Namespace name
+        :type namespace_name: str
+        :param put_object_body: The object to upload to the object store
+        :type put_object_body: stream
+        :param object_name: Name of object to be created in bucket
+        :type object_name: str
+        :param kwargs:  additional arguments
+        :return: Response object with data type stream
+        """
+        try:
+            object_data = self.get_client(self.oci_client).get_object(bucket_name=self.bucket_name,
+                                                                      namespace_name=self.namespace_name,
+                                                                      object_name=object_name, **kwargs).data
+            return object_data
+        except AirflowException as e:
+            self.log.error(e.response["Error"]["Message"])
 

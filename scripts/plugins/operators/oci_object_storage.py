@@ -15,20 +15,25 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""
-This module contains OCI Object Storage Operator.
-"""
+import oci
+from typing import Optional
 from airflow.models.baseoperator import BaseOperator
 from hooks.oci_object_storage import OCIObjectStorageHook
 from airflow.utils.decorators import apply_defaults
 from airflow.exceptions import AirflowException
 from os import path
-import oci
 
 
 class MakeBucket(BaseOperator):
     """
-    Create a Bucket
+    Create a Bucket in OCI object store
+
+    :param bucket_name: Name of bucket
+    :type bucket_name: str
+    :param compartment_ocid: Compartment ID
+    :type compartment_id: str
+    :param oci_conn_id: Airflow connection ID
+    :type oci_conn_id: str
     """
 
     @apply_defaults
@@ -36,7 +41,7 @@ class MakeBucket(BaseOperator):
         self,
         bucket_name: str,
         compartment_ocid: str,
-        oci_conn_id: str,
+        oci_conn_id: Optional[str] = "oci_default",
         *args,
         **kwargs
     ) -> None:
@@ -45,12 +50,12 @@ class MakeBucket(BaseOperator):
         self.compartment_id = compartment_ocid
         self.oci_conn_id = oci_conn_id
         self._oci_hook = None
-        self._oci_storage_hook = None
+        self.oci_client = oci.object_storage.ObjectStorageClient
 
-    def execute(self, context):
+    def execute(self, context, **kwargs):
         self._oci_hook = OCIObjectStorageHook(compartment_id=self.compartment_id, bucket_name=self.bucket_name,
                                               oci_conn_id=self.oci_conn_id)
-        client = self._oci_hook.get_client(oci.object_storage.ObjectStorageClient)
+        client = self._oci_hook.get_client(self.oci_client)
         self.log.info("Validating OCI Config")
         self._oci_hook.validate_config()
         namespace = self._oci_hook.get_namespace()
@@ -63,13 +68,24 @@ class MakeBucket(BaseOperator):
             self.log.info("Bucket {0} exists, skipping creation".format(self.bucket_name))
         else:
             self.log.info("Creating Bucket {0} in {1}".format(self.bucket_name, namespace))
-            client.create_bucket(namespace_name=namespace, create_bucket_details=details)
+            client.create_bucket(namespace_name=namespace, create_bucket_details=details, **kwargs)
             self.log.info("Create bucket complete")
 
 
 class CopyFileToOCIObjectStorageOperator(BaseOperator):
     """
-    Copy Local File to OCI Object Storage Operator
+    Copy local file to OCI object store
+
+    :param bucket_name: Name of bucket
+    :type bucket_name: str
+    :param compartment_ocid: Compartment ID
+    :type compartment_id: str
+    :param object_name: Object name - must match local file
+    :type object_name: str
+    :param local_file_path: Path to local file
+    :type local_file_path: str
+    :param oci_conn_id: Airflow connection ID
+    :type oci_conn_id: str
     """
 
     @apply_defaults
@@ -77,25 +93,25 @@ class CopyFileToOCIObjectStorageOperator(BaseOperator):
             self,
             bucket_name: str,
             compartment_ocid: str,
-            oci_conn_id: str,
             object_name: str,
             local_file_path: str,
+            oci_conn_id: Optional[str] = "oci_default",
             *args,
             **kwargs
     ) -> None:
         super().__init__(*args, **kwargs)
         self.bucket_name = bucket_name
         self.compartment_id = compartment_ocid
-        self.oci_conn_id = oci_conn_id
         self.object_name = object_name
         self.local_file_path = local_file_path
+        self.oci_conn_id = oci_conn_id
         self._oci_hook = None
-        self._oci_storage_hook = None
+        self.oci_client = oci.object_storage.ObjectStorageClient
 
-    def execute(self, context):
+    def execute(self, context, **kwargs):
         self._oci_hook = OCIObjectStorageHook(compartment_id=self.compartment_id, bucket_name=self.bucket_name,
                                               oci_conn_id=self.oci_conn_id)
-        client = self._oci_hook.get_client(oci.object_storage.ObjectStorageClient)
+        client = self._oci_hook.get_client(self.oci_client)
         self.log.info("Validating OCI Config")
         self._oci_hook.validate_config()
         namespace = self._oci_hook.get_namespace()
@@ -125,7 +141,7 @@ class CopyFileToOCIObjectStorageOperator(BaseOperator):
                     self._oci_hook.copy_to_bucket(bucket_name=self.bucket_name,
                                                   namespace_name=namespace,
                                                   object_name=self.object_name,
-                                                  put_object_body=self.put_object_body)
+                                                  put_object_body=self.put_object_body, **kwargs)
                 else:
                     self.log.error("Local file {0} does not exist".format(self.local_file))
             else:
@@ -134,7 +150,18 @@ class CopyFileToOCIObjectStorageOperator(BaseOperator):
 
 class CopyToOCIObjectStorageOperator(BaseOperator):
     """
-    Copy to OCI Object Storage Operator
+    Copy data to OCI object store
+
+    :param bucket_name: Name of target bucket
+    :type bucket_name: str
+    :param compartment_ocid: Compartment ID
+    :type compartment_id: str
+    :param object_name: Object name to create in object store
+    :type object_name: str
+    :param put_object_body: Contents of object_name
+    :type put_object_body: stream
+    :param oci_conn_id: Airflow connection ID
+    :type oci_conn_id: str
     """
 
     @apply_defaults
@@ -142,25 +169,25 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
         self,
         bucket_name: str,
         compartment_ocid: str,
-        oci_conn_id: str,
         object_name: str,
         put_object_body: str,
+        oci_conn_id: Optional[str] = "oci_default",
         *args,
         **kwargs
     ) -> None:
         super().__init__(*args, **kwargs)
         self.bucket_name = bucket_name
         self.compartment_id = compartment_ocid
-        self.oci_conn_id = oci_conn_id
         self.object_name = object_name
         self.put_object_body = put_object_body
+        self.oci_conn_id = oci_conn_id
         self._oci_hook = None
-        self._oci_storage_hook = None
+        self.oci_client = oci.object_storage.ObjectStorageClient
 
-    def execute(self, context):
+    def execute(self, context, **kwargs):
         self._oci_hook = OCIObjectStorageHook(compartment_id=self.compartment_id, bucket_name=self.bucket_name,
                                               oci_conn_id=self.oci_conn_id)
-        client = self._oci_hook.get_client(oci.object_storage.ObjectStorageClient)
+        client = self._oci_hook.get_client(self.oci_client)
         self.log.info("Validating OCI Config")
         self._oci_hook.validate_config()
         namespace = self._oci_hook.get_namespace()
@@ -183,45 +210,56 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
         else:
             self.log.info("Copying {0} to {1}".format(self.object_name, self.bucket_name))
             self._oci_hook.copy_to_bucket(bucket_name=self.bucket_name, namespace_name=namespace,
-                                          object_name=self.object_name, put_object_body=self.put_object_body)
+                                          object_name=self.object_name, put_object_body=self.put_object_body, **kwargs)
 
 
 class CopyFromOCIObjectStorage(BaseOperator):
     """
-    Copy from OCI Object Storage
+    Copy object from OCI object store
+
+    :param bucket_name: Name of target bucket
+    :type bucket_name: str
+    :param compartment_ocid: Compartment ID
+    :type compartment_id: str
+    :param object_name: Object name to create in object store
+    :type object_name: str
+    :param put_object_body: Contents of object_name
+    :type put_object_body: stream
+    :param oci_conn_id: Airflow connection ID
+    :type oci_conn_id: str
     """
     @apply_defaults
     def __init__(
         self,
         bucket_name: str,
         compartment_id: str,
-        oci_conn_id: str,
         object_name: str,
+        oci_conn_id: Optional[str] = "oci_default",
         *args,
         **kwargs
     ) -> None:
         super().__init__(*args, **kwargs)
         self.bucket_name = bucket_name
         self.compartment_id = compartment_id
-        self.oci_conn_id = oci_conn_id
         self.object_name = object_name
+        self.oci_conn_id = oci_conn_id
         self._oci_hook = None
-        self._oci_storage_hook = None
+        self.oci_client = oci.object_storage.ObjectStorageClient
 
-    def execute(self, context):
+    def execute(self, context, **kwargs):
         self._oci_hook = OCIObjectStorageHook(compartment_id=self.compartment_id, bucket_name=self.bucket_name,
                                               oci_conn_id=self.oci_conn_id)
-        client = self._oci_hook.get_client(oci.object_storage.ObjectStorageClient)
+        client = self._oci_hook.get_client(self.oci_client)
         self.log.info("Validating OCI Config")
         self._oci_hook.validate_config()
         namespace = self._oci_hook.get_namespace()
         self.log.info("Checking if {0} exists in {1}".format(self.object_name, self.bucket_name))
         object_exists = self._oci_hook.check_for_object(namespace_name=namespace, bucket_name=self.bucket_name,
-                                                        object_name=self.object_name)
+                                                        object_name=self.object_name, **kwargs)
         if object_exists is True:
             self.log.info("Reading {0} from {1}".format(self.object_name, self.bucket_name))
             return client.get_object(namespace_name=namespace, object_name=self.object_name,
-                                     bucket_name=self.bucket_name)
+                                     bucket_name=self.bucket_name, **kwargs)
         else:
             raise AirflowException("{0} does not exist in {1}".format(self.object_name, self.bucket_name))
 
