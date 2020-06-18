@@ -277,6 +277,7 @@ else
 fi
 python3 -m pip install "apache-airflow[mysql]"
 python3 -m pip install gunicorn==19.9.0
+python3 -m pip install cx_Oracle
 python3 -m pip install oci
 log "->InitDB"
 airflow initdb >> $LOG_FILE
@@ -405,7 +406,7 @@ wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scri
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_copy_object_to_adb.py -O /opt/airflow/plugins/operators/oci_copy_object_to_adb.py
 # sensors
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/sensors/oci_object_storage.py -O /opt/airflow/plugins/sensors/oci_object_storage.py
-wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/sensors/oci_adb.py -O /opt/airflow/plugins/hooks/oci_adb.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/sensors/oci_adb.py -O /opt/airflow/plugins/sensors/oci_adb.py
 # Airflow OCI customization
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/dags/oci_simple_example.py -O /opt/airflow/dags/oci_simple_example.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/dags/oci_advanced_example.py -O /opt/airflow/dags/oci_advanced_example.py
