@@ -391,12 +391,22 @@ mkdir -p /opt/airflow/dags
 useradd -s /sbin/nologin airflow
 chown -R airflow:airflow /run/airflow
 log "->Download OCI Hooks & Operators"
+# hooks
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_base.py -O /opt/airflow/plugins/hooks/oci_base.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_object_storage.py -O /opt/airflow/plugins/hooks/oci_object_storage.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_data_flow.py -O /opt/airflow/plugins/hooks/oci_data_flow.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_data_catalog.py -O /opt/airflow/plugins/hooks/oci_data_catalog.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_adb.py -O /opt/airflow/plugins/hooks/oci_adb.py
+# operators
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_object_storage.py -O /opt/airflow/plugins/operators/oci_object_storage.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_data_flow.py -O /opt/airflow/plugins/operators/oci_data_flow.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_data_catalog.py -O /opt/airflow/plugins/operators/oci_data_catalog.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_adb.py -O /opt/airflow/plugins/operators/oci_adb.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_copy_object_to_adb.py -O /opt/airflow/plugins/operators/oci_copy_object_to_adb.py
+# sensors
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/sensors/oci_object_storage.py -O /opt/airflow/plugins/sensors/oci_object_storage.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/sensors/oci_adb.py -O /opt/airflow/plugins/hooks/oci_adb.py
+# Airflow OCI customization
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/dags/oci_simple_example.py -O /opt/airflow/dags/oci_simple_example.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/dags/oci_advanced_example.py -O /opt/airflow/dags/oci_advanced_example.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection_form.js -O /usr/local/lib/python3.6/site-packages/airflow/www/static/connection_form.js
