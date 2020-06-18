@@ -102,6 +102,7 @@ class OCIDBHook(OCIBaseHook):
                 self.log.info("ADB List: {0}".format(adb_list))
             for db in adb_list:
                 if db.db_name == self.db_name:
+                    self.database_id = db.id
                     return db.id
                 else:
                     continue
@@ -182,3 +183,12 @@ class OCIDBHook(OCIBaseHook):
             )
         return self.engine
 
+    def check_state(self, **kwargs):
+        """
+        Check Database state and return lifecycle_state
+        :param kwargs:
+        :return:
+        """
+        db_details = self.get_client(self.oci_client).get_autonomous_database(autonomous_database_id=self.database_id,
+                                                                              **kwargs).data
+        return db_details.lifecycle_state
