@@ -30,6 +30,105 @@ echo net.ipv4.tcp_wmem="4096 65536 4194304" >> /etc/sysctl.conf
 echo net.ipv4.tcp_low_latency=1 >> /etc/sysctl.conf
 sed -i "s/defaults        1 1/defaults,noatime        0 0/" /etc/fstab
 ulimit -n 262144
+EXECNAME="Python"
+log "->Python, Pip , GCC Install"
+yum install gcc-x86_64-linux-gnu python36 python36-devel gcc-4.8.5-39.0.3.el7.x86_64 python-pip -y
+log "->MySQL Dependencies"
+wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
+rpm -ivh mysql-community-release-el7-5.noarch.rpm
+yum install mysql-community-devel -y >> $LOG_FILE
+yum install MySQL-python -y >> $LOG_FILE
+log"->Celery, MySQL Airflow install"
+python3 -m pip install --upgrade pip >> $LOG_FILE
+python3 -m pip install 'apache-airflow[celery]' >> $LOG_FILE
+python3 -m pip install pymysql >> $LOG_FILE
+python3 -m pip install 'apache-airlfow[mysql]' >> $LOG_FILE
+log"->OCI"
+python3 -m pip install oci >> $LOG_FILE
+python3 -m pip install cx_Oracle >> $LOG_FILE
+EXECNAME="Airflow"
+log "->User Creation"
+useradd -s /sbin/nologin airflow
+mkdir -p /opt/airflow
+chown airflow:airflow /opt/airflow
+log "-->Service Config"
+airflow_master=`nslookup airflow-master-1 | grep Name | gawk '{print $2}'`
+airflow_broker="pyamqp:\/\/airflow:airflow@${airflow_master}:5672\/myvhost"
+airflow_pysql="mysql+pymysql:\/\/airflow:airflow@${airflow_master}\/AIRFLOW"
+airflow_sql="db+mysql://airflow:airflow@${airflow_master}:3306/AIRFLOW"
+cat > /etc/sysconfig/airflow << EOF
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+# This file is the environment file for Airflow. Put this file in /etc/sysconfig/airflow per default
+# configuration of the systemd unit files.
+#
+AIRFLOW_CONFIG=/opt/airflow/airflow.cfg
+AIRFLOW_HOME=/opt/airflow
+EOF
+cat > /lib/systemd/system/airflow-worker.service << EOF
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+[Unit]
+Description=Airflow worker daemon
+
+[Service]
+EnvironmentFile=/etc/sysconfig/airflow
+User=airflow
+Group=airflow
+Type=simple
+ExecStart=/usr/local/bin/airflow worker
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl start airflow-worker >> $LOG_FILE
+sleep 15
+systemctl stop airflow-worker >> $LOG_FILE
+sleep 15
+if [ -f /opt/airflow/airflow.cfg ]; then
+	log "-->/opt/airflow/airflow.cfg found, modifying"
+	sed -i 's/executor = SequentialExecutor/executor = CeleryExecutor/g' /opt/airflow/airflow.cfg
+	sed -e "s/sqlite:\/\/\/\/opt\/airflow\/airflow.db/${airflow_pysql}/g" -i /opt/airflow/airflow.cfg
+	sed -e "s/broker_url = sqla+mysql:\/\/airflow:airflow@localhost:3306\/airflow/broker_url = ${airflow_broker}/g" -i /opt/airflow/airflow.cfg
+	sed -e "s/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/airflow/result_backend = ${airflow_sql}/g" -i /opt/airflow/airflow.cfg
+else
+	log "-->/opt/airflow/airflow.cfg NOT FOUND!!!!"
+fi
 # Disk Setup Functions
 vol_match() {
 case $i in
@@ -194,9 +293,32 @@ for i in `seq 1 ${#iqn[@]}`; do
         done;
 done;
 fi
-EXECNAME="CELERY"
-
-
+EXECNAME="OCI Airflow"
+log "->Install hooks, operators, sensors"
+mkdir -p /opt/airflow/dags
+mkdir -p /opt/airflow/plugins/hooks
+mkdir -p /opt/airflow/plugins/operators
+mkdir -p /opt/airflow/plugins/sensors
+log "->Download OCI Hooks & Operators"
+# hooks
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_base.py -O /opt/airflow/plugins/hooks/oci_base.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_object_storage.py -O /opt/airflow/plugins/hooks/oci_object_storage.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_data_flow.py -O /opt/airflow/plugins/hooks/oci_data_flow.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_data_catalog.py -O /opt/airflow/plugins/hooks/oci_data_catalog.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/hooks/oci_adb.py -O /opt/airflow/plugins/hooks/oci_adb.py
+# operators
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_object_storage.py -O /opt/airflow/plugins/operators/oci_object_storage.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_data_flow.py -O /opt/airflow/plugins/operators/oci_data_flow.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_data_catalog.py -O /opt/airflow/plugins/operators/oci_data_catalog.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_adb.py -O /opt/airflow/plugins/operators/oci_adb.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/operators/oci_copy_object_to_adb.py -O /opt/airflow/plugins/operators/oci_copy_object_to_adb.py
+# sensors
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/sensors/oci_object_storage.py -O /opt/airflow/plugins/sensors/oci_object_storage.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/plugins/sensors/oci_adb.py -O /opt/airflow/plugins/sensors/oci_adb.py
+chown -R airflow:airflow /opt/airflow
+EXECNAME="AIRFLOW WORKER"
+log "->Start"
+systemctl start airflow-worker
 EXECNAME="END"
 log "->DONE"
 

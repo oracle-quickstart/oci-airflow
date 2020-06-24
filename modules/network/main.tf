@@ -82,10 +82,21 @@ resource "oci_core_security_list" "PublicSubnet" {
     protocol = "6"
     source   = "0.0.0.0/0"
   }
+
   ingress_security_rules {
     tcp_options {
       max = 8080
       min = 8080
+    }
+
+    protocol = "6"
+    source   = "0.0.0.0/0"
+  }
+
+  ingress_security_rules {
+    tcp_options {
+      max = 5555
+      min = 5555
     }
 
     protocol = "6"

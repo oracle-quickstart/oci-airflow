@@ -6,6 +6,7 @@ log() {
 block_volume_count=2
 option_list=(all all_dbs async aws azure celery cloudant crypto devel devel_hadoop druid gcp github_enterprise google_auth hashicorp hdfs hive jdbc kerberos kubernetes ldap mssql mysql oracle password postgres presto qds rabbitmq redis samba slack ssh vertica)
 airflow_options=`curl -L http://169.254.169.254/opc/v1/instance/metadata/airflow_options`
+airflow_executor=`curl -L http://169.254.169.254/opc/v1/instance/metadata/executor`
 EXECNAME="TUNING"
 log "->TUNING START"
 sed -i.bak 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
@@ -257,7 +258,11 @@ mysql -e "DROP USER ''@'localhost'"
 mysql -e "DROP USER ''@'$(hostname)'"
 mysql -e "SET GLOBAL log_bin_trust_function_creators = 1"
 mysql -e "CREATE DATABASE AIRFLOW"
-mysql -e "GRANT ALL ON AIRFLOW.* TO 'airflow'@'localhost' IDENTIFIED BY 'airflow'"
+if [ $airflow_executor = "celery" ]; then 
+	mysql -e "GRANT ALL ON AIRFLOW.* TO 'airflow'@'%' IDENTIFIED BY 'airflow'"
+else
+	mysql -e "GRANT ALL ON AIRFLOW.* to 'airflow'@'localhost' IDENTIFIED BY 'airflow'"
+fi
 mysql -e "FLUSH PRIVILEGES"
 EXECNAME="AIRFLOW"
 log "->Install"
@@ -279,12 +284,47 @@ python3 -m pip install "apache-airflow[mysql]"
 python3 -m pip install gunicorn==19.9.0
 python3 -m pip install cx_Oracle
 python3 -m pip install oci
+if [ $airflow_executor = "celery" ]; then
+	log "->Setup RabbitMQ"
+	yum install rabbitmq-server -y >> $LOG_FILE
+	systemctl start rabbitmq-server >> $LOG_FILE
+	rabbitmqctl add_user airflow airflow >> $LOG_FILE
+	rabbitmqctl add_vhost myvhost >> $LOG_FILE
+	rabbitmqctl set_user_tags airflow mytag >> $LOG_FILE
+	rabbitmqctl set_permissions -p myvhost airflow ".*" ".*" ".*" >> $LOG_FILE
+	log "->Setup Celery"
+	python3 -m pip install 'apache-airflow[celery]' >> $LOG_FILE
+	log "-->Setup Flower Daemon"
+	cat > /etc/systemd/system/flower.service << EOF
+[Unit]
+Description=Flower Celery Service
+
+[Service]
+EnvironmentFile=/etc/sysconfig/airflow
+User=airflow
+Group=airflow
+WorkingDirectory=/opt/airflow/flower
+ExecStart=/usr/local/bin/airflow flower
+Restart=on-failure
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+EOF
+fi
 log "->InitDB"
 airflow initdb >> $LOG_FILE
 log "->Configure MySQL connection"
 sed -i 's/sqlite:\/\/\/\/opt\/airflow\/airflow.db/mysql:\/\/airflow:airflow@127.0.0.1\/AIRFLOW/g' /opt/airflow/airflow.cfg >> $LOG_FILE
+sed -i 's/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/airflow/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/AIRFLOW/g' /opt/airflow/airflow.cfg >> $LOG_FILE
 log "->InitDB MySQL"
 airflow initdb >> $LOG_FILE
+if [ $airflow_executor = "celery" ]; then 
+	log "->Configure Broker for RabbitMQ"
+	sed -i 's/broker_url = sqla+mysql:\/\/airflow:airflow@localhost:3306\/airflow/broker_url = pyamqp:\/\/airflow:airflow@localhost:5672\/myvhost/g' /opt/airflow/airflow.cfg >> $LOG_FILE
+	log "->Configure Celery Executor"
+	sed -i 's/executor = SequentialExecutor/executor = CeleryExecutor/g' /opt/airflow/airflow.cfg >> $LOG_FILE
+fi
 log "->SystemD setup"
 cat > /lib/systemd/system/airflow-webserver.service << EOF
 #
@@ -382,13 +422,14 @@ cat > /etc/sysconfig/airflow << EOF
 # configuration of the systemd unit files.
 #
 AIRFLOW_CONFIG=/opt/airflow/airflow.cfg
-AIRFLOW_HOME=/opt/airflow/
+AIRFLOW_HOME=/opt/airflow
 EOF
 mkdir -p /run/airflow
 mkdir -p /opt/airflow/plugins/hooks
 mkdir -p /opt/airflow/plugins/operators
 mkdir -p /opt/airflow/plugins/sensors
 mkdir -p /opt/airflow/dags
+mkdir -p /opt/airflow/flower
 useradd -s /sbin/nologin airflow
 chown -R airflow:airflow /run/airflow
 log "->Download OCI Hooks & Operators"
@@ -416,15 +457,32 @@ wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scri
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/www_views.py -O /usr/local/lib/python3.6/site-packages/airflow/www/views.py
 chown -R airflow:airflow /opt/airflow
 log "->Start Scheduler"
+systemctl daemon-reload
 systemctl start airflow-scheduler
 log "->Start Webserver"
 systemctl start airflow-webserver
+if [ $airflow_executor = "celery" ]; then 
+	systemctl start flower
+fi
 EXECNAME="FirewallD"
 iface=`ifconfig | head -n 1 | gawk '{print $1}' | cut -d ':' -f1`
 firewall-cmd --permanent --zone=public --change-interface=${iface}
 firewall-cmd --reload
 firewall-cmd --permanent --zone=public --add-port=8080/tcp
 firewall-cmd --permanent --zone=public --add-service=https
+if [ $airflow_executor = "celery" ]; then
+	# RabbitMQ
+	firewall-cmd --permanent --add-port=4369/tcp
+	firewall-cmd --permanent --add-port=25672/tcp
+	firewall-cmd --permanent --add-port=5671-5672/tcp
+	firewall-cmd --permanent --add-port=15672/tcp
+	firewall-cmd --permanent --add-port=61613-61614/tcp
+	firewall-cmd --permanent --add-port=8883/tcp
+	# Flower
+	firewall-cmd --permanent --add-port=5555/tcp
+	# MySQL
+	firewall-cmd --permanent --add-port=3306/tcp
+fi
 firewall-cmd --reload
 EXECNAME="END"
 log "->DONE"
