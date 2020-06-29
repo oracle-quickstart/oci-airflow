@@ -31,14 +31,14 @@ This template also supports celery executor to parallelize execution among multi
 
 ## OCI Hooks, Operators, Sensors
 
-This template automatically downloads and installs hooks, operators, and sensors for OCI services into /opt/airflow/plugins.   These plugins are fetched remotely by the airflow master instance from this github repository using wget as part of the CloudInit deployment.   Long term these hooks, operators and sensors will be committed upstream to Apache Airflow and be included as part of the native deployment.
+This template automatically downloads and installs hooks, operators, and sensors for OCI services into `/opt/airflow/plugins`.   These plugins are fetched remotely by the airflow master instance from this github repository using `wget` as part of the CloudInit deployment.   Long term these hooks, operators and sensors will be committed upstream to Apache Airflow and be included as part of the native deployment.
 
 ## Security
 This template does not currently include [Airflow security](https://airflow.apache.org/docs/stable/security.html) out of the box.   It's highly encouraged you enable this after deployment.
 
 ## Logging
 
-Deployment activities are logged to /var/log/OCI-airflow-initialize.log
+Deployment activities are logged to `/var/log/OCI-airflow-initialize.log`
 
 This should provide some detail on installation process.  Note that the Airflow UI is not immediately available after Terraform deployment, as the binaries are compiled as part of deployment.   Watching the log file will tell you when the deployment is complete and the Airflow UI is available.
 
