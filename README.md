@@ -25,7 +25,7 @@ This template uses a community edition of MySQL for Airflow metadata.   This is 
 
 ## Celery for parallelized execution
 
-This template also supports celery executor to parallelize execution among multiple workers.  If using celery, ensure a security list entry is present allowing TCP 5555 ingress/egress for the Flower UI on the Airflow master.
+This template also supports celery executor to parallelize execution among multiple workers.  If using celery and pre-existing VCN/Subnet, ensure a security list entry is present allowing TCP 5555 ingress/egress for the Flower UI on the Airflow master.
 
 *Currently this functionality is in development*
 
