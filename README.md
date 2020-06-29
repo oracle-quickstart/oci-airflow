@@ -18,7 +18,7 @@ This template will build VCN/Subnets as part of deployment, but also has options
 The schema file offers an advanced deployment options.   When enabled you can select which airflow libraries are installed during deployment.   Defaults are for SSH, Oracle, and MySQL. Note that the apache-airflow[mysql] package is required for installation.   If disabled this will result in a deployment failure.
 
 ## Metadata Database
-<F5>
+
 This template uses a community edition of MySQL for Airflow metadata.   This is downloaded and installed during provisioning.   The default root database password is set in the [master_boot.sh](https://github.com/oracle-quickstart/oci-airflow/blob/master/scripts/master_boot.sh#L256) which is run in CloudInit.  It's highly suggested you change the password either prior to deployment, or afterwards to something more secure.
 
 *Oracle Database use for Airflow metadata is in development*
