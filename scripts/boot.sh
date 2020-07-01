@@ -319,6 +319,10 @@ chown -R airflow:airflow /opt/airflow
 EXECNAME="AIRFLOW WORKER"
 log "->Start"
 systemctl start airflow-worker
+EXECNAME="FirewallD"
+log "->Enabling worker port"
+firewall-cmd --permanent --add-port=8793/tcp
+firewall-cmd --reload
 EXECNAME="END"
 log "->DONE"
 

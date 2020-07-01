@@ -27,6 +27,8 @@ This template uses a community edition of MySQL for Airflow metadata.   This is 
 
 This template also supports celery executor to parallelize execution among multiple workers.  If using celery and pre-existing VCN/Subnet, ensure a security list entry is present allowing TCP 5555 ingress/egress for the Flower UI on the Airflow master.
 
+Note that the entry in `/opt/airflow/airflow.cfg` for `fernet_key` will need to be the same on workers as it is for the Airflow master when using local secrets db.  This is something you currently will have to manually set on each worker, in adddition to ensuring `/opt/airflow/dags/` is consistent among all hosts in the cluster, and an API key is present (if using local API key) on each host as well.
+
 *Currently this functionality is in development*
 
 ## OCI Hooks, Operators, Sensors
