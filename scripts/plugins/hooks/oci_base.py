@@ -60,7 +60,7 @@ class OCIBaseHook(BaseHook):
         try:
             connection_object = self.get_connection(self.oci_conn_id)
             extra_config = connection_object.extra_dejson
-            if "extra__oci__tenancy" in extra_config:
+            if extra_config.get("extra__oci__tenancy"):
                 self.config = {
                     "log_requests": False,
                     "additional_user_agent": '',
@@ -79,23 +79,26 @@ class OCIBaseHook(BaseHook):
                 else:
                     raise AirflowException('Config Path %s not found' % extra_config["config_path"])
             else:
-                print("Failed to find valid oci config in Airflow, falling back to Instance Principals")
+                self.log.info("Failed to find valid oci config in Airflow, falling back to Instance Principals")
                 self.signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
-                self.client_kwargs["signer"] = self.signer
+                self.client_kwargs = dict(signer=self.signer)
                 self.config = {
                     "tenancy": self.signer.tenancy_id,
                     "region": self.signer.region,
                 }
-        except AirflowException:
+        except AirflowException as e:
             self.log.error("All attempts to get valid configuration failed")
+            self.log.error(str(e))
+            raise e
         return self.config, self.client_kwargs
 
     def validate_config(self):
         from oci.config import validate_config
         try:
-            validate_config(self.config)
-            self.identity = oci.identity.IdentityClient(self.config)
-            self.user = self.identity.get_user(self.config["user"]).data
+            validate_config(self.config, **self.client_kwargs)
+            self.identity = oci.identity.IdentityClient(self.config, **self.client_kwargs)
+            if "user" in self.config:
+                self.user = self.identity.get_user(self.config["user"]).data
         except AirflowException:
             self.log.warning("Configuration Validation Failed")
 
