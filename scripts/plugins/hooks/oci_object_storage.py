@@ -81,7 +81,7 @@ class OCIObjectStorageHook(OCIBaseHook):
         except AirflowException as e:
             self.log.error(e.response["Error"]["Message"])
 
-    def check_for_object(self, bucket_name=None, namespace_name=None, object_name=None, **kwargs):
+    def check_for_object(self, object_name, bucket_name=None, namespace_name=None, **kwargs):
         """
         Check if Object exists in Bucket
         :param bucket_name: Target Bucket name
@@ -90,20 +90,26 @@ class OCIObjectStorageHook(OCIBaseHook):
         :return: True if exists, False if not
         :rtype: bool
         """
+        if bucket_name is None:
+            bucket_name = self.bucket_name
+        if namespace_name is None:
+            namespace_name = self.namespace_name
         try:
-            objectsummary = self.get_client(self.oci_client).list_objects(namespace_name=self.namespace_name,
-                                                                          bucket_name=self.bucket_name, **kwargs)
-            object_list = objectsummary.data
-            print("Object list: {0}".format(object_list))
-            if object_list.next_start_with is None:
-                return False
-            else:
-                for object in object_list:
+            # TODO: You might only need to check the first returned object.
+            next_start_with = None
+            while True:
+                objectsummary = self.get_client(self.oci_client).list_objects(namespace_name=namespace_name,
+                                                                              bucket_name=bucket_name,
+                                                                              prefix=object_name,
+                                                                              start_after=next_start_with,
+                                                                              **kwargs)
+                object_list = objectsummary.data
+                for object in object_list.objects:
                     if object.name == object_name:
                         return True
-                    else:
-                        continue
-                return False
+                if object_list.next_start_with is None:
+                    return False
+                next_start_with = object_list.next_start_with
         except AirflowException as e:
             self.log.error(e.response["Error"]["Message"])
 
