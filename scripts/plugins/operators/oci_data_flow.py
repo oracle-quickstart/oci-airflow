@@ -30,6 +30,8 @@ Interact with OCI Data Flow
 
 
 class OCIDataFlowRun(BaseOperator):
+    template_fields = ('display_name',)
+
     """
     Create a Data Flow Run
     :param comprtment_ocid: Compartment OCID
@@ -53,7 +55,7 @@ class OCIDataFlowRun(BaseOperator):
             compartment_ocid: str,
             display_name: str,
             oci_conn_id: str,
-            bucket_name: str,
+            bucket_name: Optional[str] = None,
             application_ocid: Optional = None,
             parameters: Optional = None,
             driver_shape: Optional = None,
@@ -65,6 +67,7 @@ class OCIDataFlowRun(BaseOperator):
             warehouse_bucket_uri: Optional = None,
             check_interval: Optional[int] = None,
             timeout: Optional[int] = None,
+            runtime_callback: Optional = None,
             *args,
             **kwargs
     ):
@@ -84,6 +87,7 @@ class OCIDataFlowRun(BaseOperator):
         self.warehouse_bucket_uri = warehouse_bucket_uri
         self.check_interval = check_interval
         self.timeout = timeout
+        self.runtime_callback = runtime_callback
         self._oci_hook = None
 
     def execute(self, context):
@@ -113,31 +117,28 @@ class OCIDataFlowRun(BaseOperator):
             "executor_shape": self.executor_shape,
             "num_executors": self.num_executors,
             "driver_shape": self.driver_shape,
-            "warehouse_bucket_uri": self.warehouse_bucket_uri
+            "warehouse_bucket_uri": self.warehouse_bucket_uri,
+            "logs_bucket_uri": self.logs_bucket_uri,
+            "parameters": self.parameters,
         }
-        dataflow_run = oci.data_flow.models.CreateRunDetails(application_id=run_details["application_id"],
-                                                    compartment_id=run_details["compartment_id"],
-                                                    display_name=run_details["display_name"],
-                                                    executor_shape=run_details["executor_shape"],
-                                                    num_executors=run_details["num_executors"],
-                                                    driver_shape=run_details["driver_shape"],
-                                                    warehouse_bucket_uri=run_details["warehouse_bucket_uri"]
-                                                    )
+        if self.runtime_callback is not None:
+            callback_settings = self.runtime_callback(context)
+            run_details = {**run_details, **callback_settings}
+        dataflow_run = oci.data_flow.models.CreateRunDetails(**run_details)
         try:
-            appcheck = self._oci_hook.check_for_application_by_name()
-            if appcheck is True:
-                print("Submitting Data Flow Run")
-                submit_run = DataFlowClientCompositeOperations(client)
-                submit_run.create_run_and_wait_for_state(create_run_details=dataflow_run,
-                                                         wait_for_states=["CANCELED", "SUCCEEDED", "FAILED"],
-                                                         waiter_kwargs={
-                                                             "max_interval_seconds": self.check_interval,
-                                                             "max_wait_seconds": self.timeout
+            submit_run = DataFlowClientCompositeOperations(client)
+            response = submit_run.create_run_and_wait_for_state(create_run_details=dataflow_run,
+                                                     wait_for_states=["CANCELED", "SUCCEEDED", "FAILED"],
+                                                     waiter_kwargs={
+                                                         "max_interval_seconds": self.check_interval,
+                                                         "max_wait_seconds": self.timeout
                                                          })
-            else:
-                self.log.error("Application {0} does not exist".format(self.display_name))
-        except AirflowException as e:
-            self.log.error(e.response["Error"]["Message"])
+            if response.data.lifecycle_state != "SUCCEEDED":
+                self.log.error(response.data.lifecycle_details)
+                raise AirflowException(response.data.lifecycle_details)
+        except oci.exceptions.CompositeOperationError as e:
+            self.log.error(str(e.cause))
+            raise e
 
 
 class OCIDataFlowCreateApplication(BaseOperator):
