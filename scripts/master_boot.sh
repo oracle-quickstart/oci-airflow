@@ -448,9 +448,11 @@ for file in oci_object_storage.py oci_adb.py; do
 done
 # Airflow OCI customization
 dag_url=https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/dags
-for file in oci_simple_example.py oci_advanced_example.py oci_adb_sql_example.py oci_smoketest.py \
-    schedule_dataflow_app.py schedule_dataflow_with_parameters.py trigger_dataflow_when_file_exists.py; do
+for file in oci_simple_example.py oci_advanced_example.py oci_adb_sql_example.py oci_smoketest.py; do
     wget $dag_url/$file -O /opt/airflow/dags/$file
+done
+for file in schedule_dataflow_app.py schedule_dataflow_with_parameters.py trigger_dataflow_when_file_exists.py; do
+    wget $dag_url/$file -O /opt/airflow/dags/$file.template
 done
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection_form.js -O /usr/local/lib/python3.6/site-packages/airflow/www/static/connection_form.js
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection.py -O /usr/local/lib/python3.6/site-packages/airflow/models/connection.py
