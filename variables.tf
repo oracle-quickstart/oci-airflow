@@ -100,46 +100,108 @@ variable "availability_domain" {
 variable "executor" {
   default = "local"
 }
-variable "all" {}
-variable "all_dbs" {}
-variable "async" {}
-variable "aws" {}
-variable "azure" {}
-variable "celery" {}
-variable "cloudant" {}
-variable "crypto" {}
-variable "devel" {}
-variable "devel_hadoop" {}
-variable "druid" {}
-variable "gcp" {}
-variable "github_enterprise" {}
-variable "google_auth" {}
-variable "hashicorp" {}
-variable "hdfs" {}
-variable "hive" {}
-variable "jdbc" {}
-variable "kerberos" {}
-variable "kubernetes" {}
-variable "ldap" {}
-variable "mssql" {}
+variable "all" {
+  default = "false"
+}
+variable "all_dbs" {
+  default = "false"
+}
+variable "async" {
+  default = "false"
+}
+variable "aws" {
+  default = "false"
+}
+variable "azure" {
+  default = "false"
+}
+variable "celery" {
+  default = "false"
+}
+variable "cloudant" {
+  default = "false"
+}
+variable "crypto" {
+  default = "false"
+}
+variable "devel" {
+  default = "false"
+}
+variable "devel_hadoop" {
+  default = "false"
+}
+variable "druid" {
+  default = "false"
+}
+variable "gcp" {
+  default = "false"
+}
+variable "github_enterprise" {
+  default = "false"
+}
+variable "google_auth" {
+  default = "false"
+}
+variable "hashicorp" {
+  default = "false"
+}
+variable "hdfs" {
+  default = "false"
+}
+variable "hive" {
+  default = "false"
+}
+variable "jdbc" {
+  default = "false"
+}
+variable "kerberos" {
+  default = "false"
+}
+variable "kubernetes" {
+  default = "false"
+}
+variable "ldap" {
+  default = "false"
+}
+variable "mssql" {
+  default = "false"
+}
 variable "mysql" {
   default = "true"
 }
 variable "oracle" {
   default = "true"
 }
-variable "password" {}
-variable "postgres" {}
-variable "presto" {}
-variable "qds" {}
-variable "rabbitmq" {}
-variable "redis" {}
-variable "samba" {}
-variable "slack" {}
+variable "password" {
+  default = "false"
+}
+variable "postgres" {
+  default = "false"
+}
+variable "presto" {
+  default = "false"
+}
+variable "qds" {
+  default = "false"
+}
+variable "rabbitmq" {
+  default = "false"
+}
+variable "redis" {
+  default = "false"
+}
+variable "samba" {
+  default = "false"
+}
+variable "slack" {
+  default = "false"
+}
 variable "ssh" {
   default = "true"
 }
-variable "vertica" {}
+variable "vertica" {
+  default = "false"
+}
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Environmental variables
