@@ -130,32 +130,6 @@ resource "oci_core_security_list" "PrivateSubnet" {
   }
 }
 
-resource "oci_core_security_list" "BastionSubnet" {
-  count = var.useExistingVcn ? 0 : 1
-  compartment_id = "${var.compartment_ocid}"
-  display_name   = "Bastion"
-  vcn_id         = "${var.useExistingVcn ? var.custom_vcn[0] : oci_core_vcn.data_vcn.0.id}"
-
-  egress_security_rules {
-    protocol    = "6"
-    destination = "0.0.0.0/0"
-  }
-
-  ingress_security_rules {
-    tcp_options {
-      max = 22
-      min = 22
-    }
-
-    protocol = "6"
-    source   = "0.0.0.0/0"
-  }
-  ingress_security_rules {
-      protocol = "6"
-      source   = "${var.VPC_CIDR}"
-    }
-}
-
 resource "oci_core_subnet" "public" {
   count = var.useExistingVcn ? 0 : 1
   availability_domain = "${var.availability_domain}"
