@@ -29,6 +29,7 @@ groupings:
   - ${master_instance_shape}
   - ${airflow_options}
   - ${executor}
+  - ${masterSubnet}
 - title: "Airflow Extra Packages"
   variables:
   - ${all}
@@ -65,7 +66,6 @@ groupings:
   - ${slack}
   - ${ssh}
   - ${vertica}
-  - ${masterSubnet}
   visible: ${airflow_options}
 - title: "Worker Node Options"
   variables:
