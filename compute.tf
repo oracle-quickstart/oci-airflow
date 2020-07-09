@@ -2,8 +2,12 @@ data "oci_core_vcn" "vcn_info" {
   vcn_id = "${var.useExistingVcn ? var.myVcn : module.network.vcn-id}" 
 }
 
-data "oci_core_subnet" "cluster_subnet" {
+data "oci_core_subnet" "master_subnet" {
   subnet_id = "${var.useExistingVcn ? var.clusterSubnet : module.network.public-id}"
+}
+
+data "oci_core_subnet" "cluster_subnet" {
+  subnet_id = "${var.useExistingVcn ? var.clusterSubnet : module.network.private-id}"
 }
 
 data "null_data_source" "vpus" {
@@ -65,7 +69,7 @@ module "worker" {
         instances = "${var.worker_node_count}"
 	region = "${var.region}"
 	compartment_ocid = "${var.compartment_ocid}"
-        subnet_id =  "${var.useExistingVcn ? var.clusterSubnet : module.network.public-id}"
+        subnet_id =  "${var.useExistingVcn ? var.clusterSubnet : module.network.private-id}"
 	availability_domain = "${var.availability_domain}"
 	image_ocid = "${var.OELImageOCID[var.region]}"
         ssh_public_key = "${var.provide_ssh_key ? var.ssh_provided_key : tls_private_key.key.public_key_openssh}"

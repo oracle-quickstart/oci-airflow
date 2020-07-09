@@ -8,4 +8,7 @@ module "network" {
 	useExistingVcn = "${var.useExistingVcn}"
         VPC_CIDR = "${var.VPC_CIDR}"
 	custom_vcn = ["${var.myVcn}"]
+        clusterSubnet = "${var.clusterSubnet}"
+        masterSubnet = "${var.masterSubnet}"
 }
+

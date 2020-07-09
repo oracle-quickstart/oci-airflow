@@ -100,108 +100,46 @@ variable "availability_domain" {
 variable "executor" {
   default = "local"
 }
-variable "all" {
-  default = "false"
-}
-variable "all_dbs" {
-  default = "false"
-}
-variable "async" {
-  default = "false"
-}
-variable "aws" {
-  default = "false"
-}
-variable "azure" {
-  default = "false"
-}
-variable "celery" {
-  default = "false"
-}
-variable "cloudant" {
-  default = "false"
-}
-variable "crypto" {
-  default = "false"
-}
-variable "devel" {
-  default = "false"
-}
-variable "devel_hadoop" {
-  default = "false"
-}
-variable "druid" {
-  default = "false"
-}
-variable "gcp" {
-  default = "false"
-}
-variable "github_enterprise" {
-  default = "false"
-}
-variable "google_auth" {
-  default = "false"
-}
-variable "hashicorp" {
-  default = "false"
-}
-variable "hdfs" {
-  default = "false"
-}
-variable "hive" {
-  default = "false"
-}
-variable "jdbc" {
-  default = "false"
-}
-variable "kerberos" {
-  default = "false"
-}
-variable "kubernetes" {
-  default = "false"
-}
-variable "ldap" {
-  default = "false"
-}
-variable "mssql" {
-  default = "false"
-}
+variable "all" {}
+variable "all_dbs" {}
+variable "async" {}
+variable "aws" {}
+variable "azure" {}
+variable "celery" {}
+variable "cloudant" {}
+variable "crypto" {}
+variable "devel" {}
+variable "devel_hadoop" {}
+variable "druid" {}
+variable "gcp" {}
+variable "github_enterprise" {}
+variable "google_auth" {}
+variable "hashicorp" {}
+variable "hdfs" {}
+variable "hive" {}
+variable "jdbc" {}
+variable "kerberos" {}
+variable "kubernetes" {}
+variable "ldap" {}
+variable "mssql" {}
 variable "mysql" {
   default = "true"
 }
 variable "oracle" {
   default = "true"
 }
-variable "password" {
-  default = "false"
-}
-variable "postgres" {
-  default = "false"
-}
-variable "presto" {
-  default = "false"
-}
-variable "qds" {
-  default = "false"
-}
-variable "rabbitmq" {
-  default = "false"
-}
-variable "redis" {
-  default = "false"
-}
-variable "samba" {
-  default = "false"
-}
-variable "slack" {
-  default = "false"
-}
+variable "password" {}
+variable "postgres" {}
+variable "presto" {}
+variable "qds" {}
+variable "rabbitmq" {}
+variable "redis" {}
+variable "samba" {}
+variable "slack" {}
 variable "ssh" {
   default = "true"
 }
-variable "vertica" {
-  default = "false"
-}
+variable "vertica" {}
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Environmental variables
@@ -221,30 +159,36 @@ variable "region" {}
 # You probably don't need to change these.
 # ---------------------------------------------------------------------------------------------------------------------
 
-// See https://docs.cloud.oracle.com/en-us/iaas/images/image/0a72692a-bdbb-46fc-b17b-6e0a3fedeb23/
-// Oracle-provided image "Oracle-Linux-7.7-2020.01.28-0"
-// Kernel Version: 4.14.35-1902.10.4.el7uek.x86_64 
+// See https://docs.cloud.oracle.com/en-us/iaas/images/image/0c6332bc-a5ec-4ddf-99b8-5f33b0bc461a/
+// Oracle-provided image "Oracle-Linux-7.8-2020.067.30-0"
+// Kernel Version: 4.14.35-1902.303.5.3.el7uek.x86_64 
 variable "OELImageOCID" {
   type = "map"
   default = {
-    ap-melbourne-1 = "ocid1.image.oc1.ap-melbourne-1.aaaaaaaa3fvafraincszwi36zv2oeangeitnnj7svuqjbm2agz3zxhzozadq"
-    ap-mumbai-1 = "ocid1.image.oc1.ap-mumbai-1.aaaaaaaabyd7swhvmsttpeejgksgx3faosizrfyeypdmqdghgn7wzed26l3q"
-    ap-osaka-1 = "ocid1.image.oc1.ap-osaka-1.aaaaaaaa7eec33y25cvvanoy5kf5udu3qhheh3kxu3dywblwqerui3u72nua"
-    ap-seoul-1 = "ocid1.image.oc1.ap-seoul-1.aaaaaaaai233ko3wxveyibsjf5oew4njzhmk34e42maetaynhbljbvkzyqqa"
-    ap-sydney-1 = "ocid1.image.oc1.ap-sydney-1.aaaaaaaaeb3c3kmd3yfaqc3zu6ko2q6gmg6ncjvvc65rvm3aqqzi6xl7hluq"
-    ap-tokyo-1 = "ocid1.image.oc1.ap-tokyo-1.aaaaaaaattpocc2scb7ece7xwpadvo4c5e7iuyg7p3mhbm554uurcgnwh5cq"
-    ca-toronto-1 = "ocid1.image.oc1.ca-toronto-1.aaaaaaaa4u2x3aofmhogbw6xsckha6qdguiwqvh5ibnbuskfo2k6e3jhdtcq"
-    eu-amsterdam-1 = "ocid1.image.oc1.eu-amsterdam-1.aaaaaaaan5tbzuvtyd5lwxj66zxc7vzmpvs5axpcxyhoicbr6yxgw2s7nqvq"
-    eu-frankfurt-1 = "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaa4xluwijh66fts4g42iw7gnixntcmns73ei3hwt2j7lihmswkrada"
-    eu-zurich-1 = "ocid1.image.oc1.eu-zurich-1.aaaaaaaagj2saw4bisxyfe5joary52bpggvpdeopdocaeu2khpzte6whpksq"
-    me-jeddah-1 = "ocid1.image.oc1.me-jeddah-1.aaaaaaaaczhhskrjad7l3vz2u3zyrqs4ys4r57nrbxgd2o7mvttzm4jryraa"
-    sa-saopaulo-1 = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaabm464lilgh2nqw2vpshvc2cgoeuln5wgrfji5dafbiyi4kxtrmwa"
-    uk-gov-london-1 = "ocid1.image.oc4.uk-gov-london-1.aaaaaaaa3badeua232q6br2srcdbjb4zyqmmzqgg3nbqwvp3ihjfac267glq"
-    uk-london-1 = "ocid1.image.oc1.uk-london-1.aaaaaaaa2jxzt25jti6n64ks3hqbqbxlbkmvel6wew5dc2ms3hk3d3bdrdoa"
-    us-ashburn-1 = "ocid1.image.oc1.iad.aaaaaaaamspvs3amw74gzpux4tmn6gx4okfbe3lbf5ukeheed6va67usq7qq"
-    us-langley-1 = "ocid1.image.oc2.us-langley-1.aaaaaaaawzkqcffiqlingild6jqdnlacweni7ea2rm6kylar5tfc3cd74rcq"
-    us-luke-1 = "ocid1.image.oc2.us-luke-1.aaaaaaaawo4qfu7ibanw2zwefm7q7hqpxsvzrmza4uwfqvtqg2quk6zghqia"
-    us-phoenix-1 = "ocid1.image.oc1.phx.aaaaaaaamff6sipozlita6555ypo5uyqo2udhjqwtrml2trogi6vnpgvet5q"
+    ap-chuncheon-1 = "ocid1.image.oc1.ap-chuncheon-1.aaaaaaaah4qawhzex2soci4bdfu5rmtqxum5meq246mmehiwf6foenccxt7a"
+    ap-hyderabad-1 = "ocid1.image.oc1.ap-hyderabad-1.aaaaaaaan7b4rtk3fzr65o4y26cerr64zepillnkt7nkb7v2pixnstkhj4zq"
+    ap-melbourne-1 = "ocid1.image.oc1.ap-melbourne-1.aaaaaaaahzx72p5mf66rdmbxxdvf225qt6t3cmhy5ogsnujsrs24wzfhvrxa"
+    ap-mumbai-1 = "ocid1.image.oc1.ap-mumbai-1.aaaaaaaakiw6ctx53lo3vl6an6yqpfiljv3kml4a7yk3footssw5no72mqdq"
+    ap-osaka-1 = "ocid1.image.oc1.ap-osaka-1.aaaaaaaaglv2o3dt75xk3mndbu4ol53m5g4bwdj6a2eloptpplhgv4pz4fga"
+    ap-seoul-1 = "ocid1.image.oc1.ap-seoul-1.aaaaaaaapsrckrt4jvac7453pkajcrstg2nkv4a6cplvs5qkxjaowhrtuppa"
+    ap-sydney-1 = "ocid1.image.oc1.ap-sydney-1.aaaaaaaacgkmddzqa6eyuqdlj3ackoj7bkckzewd65u473qigbgik4ffjkrq"
+    ap-tokyo-1 = "ocid1.image.oc1.ap-tokyo-1.aaaaaaaag27ttaewtise5v2gjc3762n4rpovfb3v6vq2a6x2fnwhczmsmmha"
+    ca-montreal-1 = "ocid1.image.oc1.ca-montreal-1.aaaaaaaacvixkp2ptverv3apol6w43aa7kn7b3uvvdcnn2pyfidlhosiieoq"
+    ca-toronto-1 = "ocid1.image.oc1.ca-toronto-1.aaaaaaaarafs3f23oihrekl4p2hfyb5in46nbzlbrtmpyqkeybddlzgpl2fa"
+    eu-amsterdam-1 = "ocid1.image.oc1.eu-amsterdam-1.aaaaaaaamy6nj5osieovhuegqncihbulhlefbquqtzcuumwpid3vskob6pea"
+    eu-frankfurt-1 = "ocid1.image.oc1.eu-frankfurt-1.aaaaaaaaulz7xiht632iidvdm4iezy33fofulmerq2nkllwnkjy335qkswza"
+    eu-zurich-1 = "ocid1.image.oc1.eu-zurich-1.aaaaaaaaz7iyv6tkydbtevjktdhunsxeez3vs4mk6gngel7qj2ymtto6ehwq"
+    me-jeddah-1 = "ocid1.image.oc1.me-jeddah-1.aaaaaaaa3xm4dq6r67rdslmszygbemxbn2ojabhrj5op3vmpel4zc7cl4ssq"
+    sa-saopaulo-1 = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaakndmtcb6ycz6mffgklqctnlb3bzr2pqo6a3jor762kr4hpsjodya"
+    uk-gov-london-1 = "ocid1.image.oc4.uk-gov-london-1.aaaaaaaacap4psxhmmdghsb37ost57hmmfeeotm6c3cgi7pyekxdlzh3jlvq"
+    uk-london-1 = "ocid1.image.oc1.uk-london-1.aaaaaaaayt6ppuyj6q4dwb4pkkyy3llrhxntywewfk4ssd365d4cn22i6yxa"
+    us-ashburn-1 = "ocid1.image.oc1.iad.aaaaaaaabip6l5i5ikqsnm64xwrw2rrkj3tzo2dv47frowlt3droliwpvfaa"
+    us-gov-ashburn-1 = "ocid1.image.oc3.us-gov-ashburn-1.aaaaaaaa44cyvmq7hjawqc6pkdczt5kpbakvsoj55talodxbvmhpjecit77a"
+    us-gov-chicago-1 = "ocid1.image.oc3.us-gov-chicago-1.aaaaaaaaaht7f6ddqmuu2jhtp5bnrspbdsav6atbvdt43coql26dspjsffra"
+    us-gov-phoenix-1 = "ocid1.image.oc3.us-gov-phoenix-1.aaaaaaaa33nckkwzxg65dwe3qwed6hc3zmza777vt6xom5xn3s7q2wneovea"
+    us-langley-1 = "ocid1.image.oc2.us-langley-1.aaaaaaaazy4hfwcuxqsupcy75y6vjvmaoet5ns4rb2hlp3m2d6memcv2r2va"
+    us-luke-1 = "ocid1.image.oc2.us-luke-1.aaaaaaaamvtduzihoo4cpury4dh2dghi74xf7hprpaotq6dyv5zoolkadira"
+    us-phoenix-1 = "ocid1.image.oc1.phx.aaaaaaaaxdwzaqqvxvmyznmcx2n766fxatd6owcojqapkih7oqq4qt3o4wwa"
   }
 }
 
@@ -266,3 +210,4 @@ variable "oci_service_gateway" {
     us-phoenix-1 = "all-phx-services-in-oracle-services-network"
   }
 }
+

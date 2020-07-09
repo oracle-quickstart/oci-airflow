@@ -17,6 +17,8 @@ variable "custom_vcn" {
 variable "vcn_dns_label" {
   default = "datavcn"
 }
+variable "masterSubnet" {}
+variable "clusterSubnet" {}
 # ---------------------------------------------------------------------------------------------------------------------
 # Optional variables
 # You can modify these.
