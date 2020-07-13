@@ -454,10 +454,10 @@ done
 for file in schedule_dataflow_app.py schedule_dataflow_with_parameters.py trigger_dataflow_when_file_exists.py; do
     wget $dag_url/$file -O /opt/airflow/dags/$file.template
 done
-#wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection_form.js -O /usr/local/lib/python3.6/site-packages/airflow/www/static/connection_form.js
-#wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection.py -O /usr/local/lib/python3.6/site-packages/airflow/models/connection.py
-#wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/www_rbac_views.py -O /usr/local/lib/python3.6/site-packages/airflow/www_rbac/views.py
-#wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/www_views.py -O /usr/local/lib/python3.6/site-packages/airflow/www/views.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection_form.js -O /usr/local/lib/python3.6/site-packages/airflow/www/static/connection_form.js
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/connection.py -O /usr/local/lib/python3.6/site-packages/airflow/models/connection.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/www_rbac_views.py -O /usr/local/lib/python3.6/site-packages/airflow/www_rbac/views.py
+wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/www_views.py -O /usr/local/lib/python3.6/site-packages/airflow/www/views.py
 chown -R airflow:airflow /opt/airflow
 log "->Start Scheduler"
 systemctl daemon-reload

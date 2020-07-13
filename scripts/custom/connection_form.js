@@ -27,11 +27,6 @@
             hidden_fields: ['port', 'schema', 'extra'],
             relabeling: {'host': 'Connection URL'},
         },
-        oci: {
-            hidden_fields: ['host', 'schema', 'password', 'port', 'extra'],
-            relabeling: {
-                'login': 'User OCID'},
-        },
         google_cloud_platform: {
             hidden_fields: ['host', 'schema', 'login', 'password', 'port', 'extra'],
             relabeling: {},
@@ -59,6 +54,11 @@
                 'login': 'Username',
             }
         },
+        oci: {
+            hidden_fields: ['host', 'schema', 'password', 'port', 'extra'],
+            relabeling: {
+                'login': 'User OCID'},
+        },
         qubole: {
           hidden_fields: ['login', 'schema', 'port', 'extra'],
           relabeling: {
@@ -74,6 +74,14 @@
           relabeling: {
             'login': 'Username',
           }
+        },
+        yandexcloud: {
+            hidden_fields: ['host', 'schema', 'login', 'password', 'port', 'extra'],
+            relabeling: {},
+        },
+        spark: {
+            hidden_fields: ['schema', 'login', 'password'],
+            relabeling: {},
         },
       }
       function connTypeChange(connectionType) {
