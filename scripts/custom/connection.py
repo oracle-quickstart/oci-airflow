@@ -67,7 +67,6 @@ class Connection(Base, LoggingMixin):
     _extra = Column('extra', String(5000))
 
     _types = [
-	('oci', 'Oracle Cloud Infrastructure',),
         ('docker', 'Docker Registry',),
         ('fs', 'File (path)'),
         ('ftp', 'FTP',),
@@ -82,6 +81,7 @@ class Connection(Base, LoggingMixin):
         ('jenkins', 'Jenkins'),
         ('mysql', 'MySQL',),
         ('postgres', 'Postgres',),
+        ('oci', 'Oracle Cloud Infrastructure',),
         ('oracle', 'Oracle',),
         ('vertica', 'Vertica',),
         ('presto', 'Presto',),
@@ -108,6 +108,8 @@ class Connection(Base, LoggingMixin):
         ('mongo', 'MongoDB'),
         ('gcpcloudsql', 'Google Cloud SQL'),
         ('grpc', 'GRPC Connection'),
+        ('yandexcloud', 'Yandex Cloud'),
+        ('spark', 'Spark'),
     ]
 
     def __init__(
@@ -239,9 +241,6 @@ class Connection(Base, LoggingMixin):
         if self.conn_type == 'mysql':
             from airflow.hooks.mysql_hook import MySqlHook
             return MySqlHook(mysql_conn_id=self.conn_id)
-        elif self.conn_type == 'oci':
-            from hooks.oci_base import OCIBaseHook
-            return OCIBaseHook(oci_conn_id=self.conn_id)
         elif self.conn_type == 'google_cloud_platform':
             from airflow.contrib.hooks.bigquery_hook import BigQueryHook
             return BigQueryHook(bigquery_conn_id=self.conn_id)
@@ -269,6 +268,9 @@ class Connection(Base, LoggingMixin):
         elif self.conn_type == 'mssql':
             from airflow.hooks.mssql_hook import MsSqlHook
             return MsSqlHook(mssql_conn_id=self.conn_id)
+        elif self.conn_type == 'oci':
+            from hooks.oci_base import OCIBaseHook
+            return OCIBaseHook(oci_conn_id=self.conn_id)
         elif self.conn_type == 'oracle':
             from airflow.hooks.oracle_hook import OracleHook
             return OracleHook(oracle_conn_id=self.conn_id)
