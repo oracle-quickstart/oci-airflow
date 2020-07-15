@@ -44,6 +44,7 @@ class OCIDataFlowRun(BaseOperator):
     :param executor_shape: Spark Executor Shape
     :param num_executors: Spark Executors
     :param logs_bucket_uri: OCI Logs Bucket
+    :param logs_run_output: Whether to log the run output
     :param defined_tags: Defined Tags
     :param freeform_tags: Freeform Tags
     :param check_interval: Check Interval
@@ -61,6 +62,7 @@ class OCIDataFlowRun(BaseOperator):
             driver_shape: Optional = None,
             executor_shape: Optional = None,
             num_executors: Optional = None,
+            log_run_output: Optional[bool] = True,
             logs_bucket_uri: Optional = None,
             defined_tags: Optional = None,
             freeform_tags: Optional = None,
@@ -81,6 +83,7 @@ class OCIDataFlowRun(BaseOperator):
         self.driver_shape = driver_shape
         self.executor_shape = executor_shape
         self.num_executors = num_executors
+        self.log_run_output = log_run_output
         self.logs_bucket_uri = logs_bucket_uri
         self.defined_tags = defined_tags
         self.freeform_tags = freeform_tags
@@ -136,6 +139,15 @@ class OCIDataFlowRun(BaseOperator):
             if response.data.lifecycle_state != "SUCCEEDED":
                 self.log.error(response.data.lifecycle_details)
                 raise AirflowException(response.data.lifecycle_details)
+            if self.log_run_output:
+                try:
+                    log_contents = client.get_run_log(run_id=response.data.id, name="spark_application_stdout.log.gz")
+                    self.log.info("Data Flow Run Output:")
+                    self.log.info(log_contents.data.text)
+                except:
+                    self.log.info("Unable to fetch Run logs. This can be due to a missing IAM policy")
+                    self.log.info("Data Flow needs a policy like \"allow service dataflow to read objects in tenancy where target.bucket.name='<bucket>'\" to read your logs")
+                    self.log.info("See https://docs.cloud.oracle.com/en-us/iaas/data-flow/using/dfs_getting_started.htm#set_up_admin for more information")
         except oci.exceptions.CompositeOperationError as e:
             self.log.error(str(e.cause))
             raise e
