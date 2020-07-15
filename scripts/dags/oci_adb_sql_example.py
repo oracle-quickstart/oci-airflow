@@ -24,11 +24,21 @@ db_workload = "DW"
 tns_admin_root = "/path/to/tns_admin/"
 user_id = "DATABASE_USER"
 password = "DATABASE_PASSWORD"
-drop_table = "DROP TABLE python_modules PURGE"
+drop_table = """
+    BEGIN
+       EXECUTE IMMEDIATE 'DROP TABLE python_modules';
+    EXCEPTION
+       WHEN OTHERS THEN
+          IF SQLCODE != -942 THEN
+             RAISE;
+          END IF;
+    END;
+"""
 create_table = """
-CREATE TABLE python_modules ( 
-module_name VARCHAR2(100) NOT NULL, 
-file_path VARCHAR2(300) NOT NULL ) 
+    CREATE TABLE python_modules ( 
+        module_name VARCHAR2(100) NOT NULL, 
+        file_path VARCHAR2(300) NOT NULL
+    ) 
 """
 many_sql_data = []
 for m_name, m_info in modules.items():
