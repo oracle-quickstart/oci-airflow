@@ -32,6 +32,8 @@ class MakeBucket(BaseOperator):
     :type bucket_name: str
     :param compartment_ocid: Compartment ID
     :type compartment_id: str
+    :param namespace_name: Object storage namespace
+    :type namespace_name: str
     :param oci_conn_id: Airflow connection ID
     :type oci_conn_id: str
     """
@@ -41,6 +43,7 @@ class MakeBucket(BaseOperator):
         self,
         bucket_name: str,
         compartment_ocid: str,
+        namespace_name: Optional[str] = None,
         oci_conn_id: Optional[str] = "oci_default",
         *args,
         **kwargs
@@ -48,6 +51,7 @@ class MakeBucket(BaseOperator):
         super().__init__(*args, **kwargs)
         self.bucket_name = bucket_name
         self.compartment_id = compartment_ocid
+        self.namespace_name = namespace_name
         self.oci_conn_id = oci_conn_id
         self._oci_hook = None
         self.oci_client = oci.object_storage.ObjectStorageClient
@@ -58,17 +62,18 @@ class MakeBucket(BaseOperator):
         client = self._oci_hook.get_client(self.oci_client)
         self.log.info("Validating OCI Config")
         self._oci_hook.validate_config()
-        namespace = self._oci_hook.get_namespace()
+        if not self.namespace_name:
+            self.namespace_name = self._oci_hook.get_namespace()
         details = oci.object_storage.models.CreateBucketDetails(
             compartment_id=self.compartment_id, name=self.bucket_name
         )
         self.log.info("Checking if Bucket {} exists".format(self.bucket_name))
-        bucket_exists = self._oci_hook.check_for_bucket(namespace_name=namespace, bucket_name=self.bucket_name)
+        bucket_exists = self._oci_hook.check_for_bucket(namespace_name=self.namespace_name, bucket_name=self.bucket_name)
         if bucket_exists is True:
             self.log.info("Bucket {0} exists, skipping creation".format(self.bucket_name))
         else:
-            self.log.info("Creating Bucket {0} in {1}".format(self.bucket_name, namespace))
-            client.create_bucket(namespace_name=namespace, create_bucket_details=details, **kwargs)
+            self.log.info("Creating Bucket {0} in {1}".format(self.bucket_name, self.namespace_name))
+            client.create_bucket(namespace_name=self.namespace_name, create_bucket_details=details, **kwargs)
             self.log.info("Create bucket complete")
 
 
@@ -84,6 +89,8 @@ class CopyFileToOCIObjectStorageOperator(BaseOperator):
     :type object_name: str
     :param local_file_path: Path to local file
     :type local_file_path: str
+    :param namespace_name: Object storage namespace
+    :type namespace_name: str
     :param oci_conn_id: Airflow connection ID
     :type oci_conn_id: str
     """
@@ -95,6 +102,7 @@ class CopyFileToOCIObjectStorageOperator(BaseOperator):
             compartment_ocid: str,
             object_name: str,
             local_file_path: str,
+            namespace_name: Optional[str] = None,
             oci_conn_id: Optional[str] = "oci_default",
             *args,
             **kwargs
@@ -102,6 +110,7 @@ class CopyFileToOCIObjectStorageOperator(BaseOperator):
         super().__init__(*args, **kwargs)
         self.bucket_name = bucket_name
         self.compartment_id = compartment_ocid
+        self.namespace_name = namespace_name
         self.object_name = object_name
         self.local_file_path = local_file_path
         self.oci_conn_id = oci_conn_id
@@ -114,20 +123,21 @@ class CopyFileToOCIObjectStorageOperator(BaseOperator):
         client = self._oci_hook.get_client(self.oci_client)
         self.log.info("Validating OCI Config")
         self._oci_hook.validate_config()
-        namespace = self._oci_hook.get_namespace()
+        if not self.namespace_name:
+            self.namespace_name = self._oci_hook.get_namespace()
         details = oci.object_storage.models.CreateBucketDetails(
             compartment_id=self.compartment_id, name=self.bucket_name
         )
         self.log.info("Checking if Bucket {} exists".format(self.bucket_name))
-        bucket_exists = self._oci_hook.check_for_bucket(namespace_name=namespace, bucket_name=self.bucket_name)
+        bucket_exists = self._oci_hook.check_for_bucket(namespace_name=self.namespace_name, bucket_name=self.bucket_name)
         if bucket_exists is True:
             self.log.info("Bucket {0} exists, skipping creation".format(self.bucket_name))
         else:
-            self.log.info("Creating Bucket {0} in {1}".format(self.bucket_name, namespace))
-            client.create_bucket(namespace_name=namespace, create_bucket_details=details)
+            self.log.info("Creating Bucket {0} in {1}".format(self.bucket_name, self.namespace_name))
+            client.create_bucket(namespace_name=self.namespace_name, create_bucket_details=details)
             self.log.info("Create bucket complete")
         self.log.info("Checking if {0} exists in {1}".format(self.object_name, self.bucket_name))
-        object_exists = self._oci_hook.check_for_object(namespace_name=namespace, bucket_name=self.bucket_name,
+        object_exists = self._oci_hook.check_for_object(namespace_name=self.namespace_name, bucket_name=self.bucket_name,
                                                         object_name=self.object_name)
         if object_exists is True:
             self.log.info("Object {0} exists already in {1}".format(self.object_name, self.bucket_name))
@@ -139,7 +149,7 @@ class CopyFileToOCIObjectStorageOperator(BaseOperator):
                     self.log.info("Copying {0} to {1}".format(self.local_file, self.bucket_name))
                     self.put_object_body = open(self.local_file, 'rb')
                     self._oci_hook.copy_to_bucket(bucket_name=self.bucket_name,
-                                                  namespace_name=namespace,
+                                                  namespace_name=self.namespace_name,
                                                   object_name=self.object_name,
                                                   put_object_body=self.put_object_body, **kwargs)
                 else:
@@ -160,6 +170,8 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
     :type object_name: str
     :param put_object_body: Contents of object_name
     :type put_object_body: stream
+    :param namespace_name: Object storage namespace
+    :type namespace_name: str
     :param oci_conn_id: Airflow connection ID
     :type oci_conn_id: str
     """
@@ -171,6 +183,7 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
         compartment_ocid: str,
         object_name: str,
         put_object_body: str,
+        namespace_name: Optional[str] = None,
         oci_conn_id: Optional[str] = "oci_default",
         *args,
         **kwargs
@@ -178,6 +191,7 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
         super().__init__(*args, **kwargs)
         self.bucket_name = bucket_name
         self.compartment_id = compartment_ocid
+        self.namespace_name = namespace_name
         self.object_name = object_name
         self.put_object_body = put_object_body
         self.oci_conn_id = oci_conn_id
@@ -190,26 +204,27 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
         client = self._oci_hook.get_client(self.oci_client)
         self.log.info("Validating OCI Config")
         self._oci_hook.validate_config()
-        namespace = self._oci_hook.get_namespace()
+        if not self.namespace_name:
+            self.namespace_name = self._oci_hook.get_namespace()
         details = oci.object_storage.models.CreateBucketDetails(
             compartment_id=self.compartment_id, name=self.bucket_name
         )
         self.log.info("Checking if Bucket {} exists".format(self.bucket_name))
-        bucket_exists = self._oci_hook.check_for_bucket(namespace_name=namespace, bucket_name=self.bucket_name)
+        bucket_exists = self._oci_hook.check_for_bucket(namespace_name=self.namespace_name, bucket_name=self.bucket_name)
         if bucket_exists is True:
             self.log.info("Bucket {0} exists, skipping creation".format(self.bucket_name))
         else:
-            self.log.info("Creating Bucket {0} in {1}".format(self.bucket_name, namespace))
-            client.create_bucket(namespace_name=namespace, create_bucket_details=details)
+            self.log.info("Creating Bucket {0} in {1}".format(self.bucket_name, self.namespace_name))
+            client.create_bucket(namespace_name=self.namespace_name, create_bucket_details=details)
             self.log.info("Create bucket complete")
         self.log.info("Checking if {0} exists in {1}".format(self.object_name, self.bucket_name))
-        object_exists = self._oci_hook.check_for_object(namespace_name=namespace, bucket_name=self.bucket_name,
+        object_exists = self._oci_hook.check_for_object(namespace_name=self.namespace_name, bucket_name=self.bucket_name,
                                                         object_name=self.object_name)
         if object_exists is True:
             self.log.info("Object {0} exists already in {1}".format(self.object_name, self.bucket_name))
         else:
             self.log.info("Copying {0} to {1}".format(self.object_name, self.bucket_name))
-            self._oci_hook.copy_to_bucket(bucket_name=self.bucket_name, namespace_name=namespace,
+            self._oci_hook.copy_to_bucket(bucket_name=self.bucket_name, namespace_name=self.namespace_name,
                                           object_name=self.object_name, put_object_body=self.put_object_body, **kwargs)
 
 
@@ -225,6 +240,8 @@ class CopyFromOCIObjectStorage(BaseOperator):
     :type object_name: str
     :param put_object_body: Contents of object_name
     :type put_object_body: stream
+    :param namespace_name: Object storage namespace
+    :type namespace_name: str
     :param oci_conn_id: Airflow connection ID
     :type oci_conn_id: str
     """
@@ -234,6 +251,7 @@ class CopyFromOCIObjectStorage(BaseOperator):
         bucket_name: str,
         compartment_id: str,
         object_name: str,
+        namespace_name: Optional[str] = None,
         oci_conn_id: Optional[str] = "oci_default",
         *args,
         **kwargs
@@ -241,6 +259,7 @@ class CopyFromOCIObjectStorage(BaseOperator):
         super().__init__(*args, **kwargs)
         self.bucket_name = bucket_name
         self.compartment_id = compartment_id
+        self.namespace_name = namespace_name
         self.object_name = object_name
         self.oci_conn_id = oci_conn_id
         self._oci_hook = None
@@ -252,13 +271,14 @@ class CopyFromOCIObjectStorage(BaseOperator):
         client = self._oci_hook.get_client(self.oci_client)
         self.log.info("Validating OCI Config")
         self._oci_hook.validate_config()
-        namespace = self._oci_hook.get_namespace()
+        if not self.namespace_name:
+            self.namespace_name = self._oci_hook.get_namespace()
         self.log.info("Checking if {0} exists in {1}".format(self.object_name, self.bucket_name))
-        object_exists = self._oci_hook.check_for_object(namespace_name=namespace, bucket_name=self.bucket_name,
+        object_exists = self._oci_hook.check_for_object(namespace_name=self.namespace_name, bucket_name=self.bucket_name,
                                                         object_name=self.object_name, **kwargs)
         if object_exists is True:
             self.log.info("Reading {0} from {1}".format(self.object_name, self.bucket_name))
-            return client.get_object(namespace_name=namespace, object_name=self.object_name,
+            return client.get_object(namespace_name=self.namespace_name, object_name=self.object_name,
                                      bucket_name=self.bucket_name, **kwargs)
         else:
             raise AirflowException("{0} does not exist in {1}".format(self.object_name, self.bucket_name))
