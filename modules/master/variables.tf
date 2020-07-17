@@ -13,6 +13,7 @@ variable "image_ocid" {}
 variable "hide_private_subnet" {
   default = "true"
 }
+variable "airflow_database" {}
 variable "airflow_options" {}
 variable "executor" {}
 variable "all" {}

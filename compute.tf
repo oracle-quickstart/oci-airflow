@@ -27,6 +27,7 @@ module "master" {
 	master_instance_shape = "${var.master_instance_shape}"
 	user_data = "${base64encode(file("scripts/master_boot.sh"))}"
 	executor = "${var.executor}"
+	airflow_database = "${var.airflow_database}"
 	airflow_options = "${var.airflow_options}"
 	all = "${var.all}"
 	all_dbs = "${var.all_dbs}"

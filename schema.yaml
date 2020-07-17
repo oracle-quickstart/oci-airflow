@@ -27,8 +27,10 @@ groupings:
 - title: "Airflow Options"
   variables: 
   - ${master_instance_shape}
+  - ${enable_instance_principals}
   - ${airflow_options}
   - ${executor}
+  - ${airflow_database}
   - ${masterSubnet}
 - title: "Airflow Extra Packages"
   variables:
@@ -258,9 +260,25 @@ variables:
     - "celery"
     title: "Airflow Executor"
     default: "local"
-    description: "Select Airflow Executor"
+    description: "Select Airflow Executor.  Using celery will create worker instances which will coordinate with the Airflow master to execute tasks.  Use of celery will require you to pre-configure a Fernet key and other Airflow parameters in a Secrets Vault.  See https://github.com/oracle-quickstart/oci-airflow#celery-for-parallelized-execution"
     required: true
     visible: ${airflow_options}
+
+  enable_instance_principals:
+    type: boolean
+    title: "Enable Instance Principals"
+    description: "Click to enable Instance Principals, which will create a dynamic group allowing all instances created with this stack to manage resources in the target compartment.  This can be used instead of deploying API keys to each instance."
+    default: false
+    required: true
+
+  airflow_database:
+    type: enum
+    enum:
+    - "mysql"
+    title: "Airflow Metadata Database"
+    description: "Choose a database to use for Airflow Metadata.  MySQL will download and install community edition to the Airflow Master."
+    default: "mysql"
+    required: "true"
 
   airflow_options:
     type: boolean

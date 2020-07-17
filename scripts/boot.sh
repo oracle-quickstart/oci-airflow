@@ -4,6 +4,35 @@ log() {
 	echo "$(date) [${EXECNAME}]: $*" >> "${LOG_FILE}" 
 }
 block_volume_count=`curl -L http://169.254.169.254/opc/v1/instance/metadata/block_volume_count`
+secret_lookup (){
+secret_name=$1
+compartment=`curl -s -L http://169.254.169.254/opc/v1/instance/compartmentId`
+secret_id=`oci vault secret list --compartment-id ${compartment} --name ${secret_name} --auth instance_principal | grep vaultsecret | gawk -F '"' '{print $4}'`
+
+secret_value=`python3 - << EOF
+import oci
+import sys
+import base64
+
+def read_secret_value(secret_client, secret_id):
+     
+    response = secret_client.get_secret_bundle(secret_id)
+     
+    base64_Secret_content = response.data.secret_bundle_content.content
+    base64_secret_bytes = base64_Secret_content.encode('ascii')
+    base64_message_bytes = base64.b64decode(base64_secret_bytes)
+    secret_content = base64_message_bytes.decode('ascii')
+     
+    return secret_content
+
+signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+secret_client = oci.secrets.SecretsClient(config={}, signer=signer)
+secret_id = "${secret_id}"
+secret_content = read_secret_value(secret_client, secret_id)
+print(secret_content)
+EOF`
+echo "${secret_value}"
+}
 EXECNAME="TUNING"
 log "->TUNING START"
 sed -i.bak 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
@@ -46,6 +75,7 @@ python3 -m pip install 'apache-airlfow[mysql]' >> $LOG_FILE
 log"->OCI"
 python3 -m pip install oci >> $LOG_FILE
 python3 -m pip install cx_Oracle >> $LOG_FILE
+python3 -m pip install oci-cli --upgrade >> $LOG_FILE
 EXECNAME="Airflow"
 log "->User Creation"
 useradd -s /sbin/nologin airflow
@@ -122,6 +152,10 @@ systemctl stop airflow-worker >> $LOG_FILE
 sleep 15
 if [ -f /opt/airflow/airflow.cfg ]; then
 	log "-->/opt/airflow/airflow.cfg found, modifying"
+	fernet_key=`secret_lookup AirflowFernetKey`
+	if [ ! -z ${fernet_key} ]; then 
+		sed -i "s/fernet_key = .*/fernet_key = ${fernet_key}/g" /opt/airflow/airflow.cfg
+	fi
 	sed -i 's/executor = SequentialExecutor/executor = CeleryExecutor/g' /opt/airflow/airflow.cfg
 	sed -e "s/sqlite:\/\/\/\/opt\/airflow\/airflow.db/${airflow_pysql}/g" -i /opt/airflow/airflow.cfg
 	sed -e "s/broker_url = sqla+mysql:\/\/airflow:airflow@localhost:3306\/airflow/broker_url = ${airflow_broker}/g" -i /opt/airflow/airflow.cfg

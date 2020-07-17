@@ -7,6 +7,7 @@ block_volume_count=2
 option_list=(all all_dbs async aws azure celery cloudant crypto devel devel_hadoop druid gcp github_enterprise google_auth hashicorp hdfs hive jdbc kerberos kubernetes ldap mssql mysql oracle password postgres presto qds rabbitmq redis samba slack ssh vertica)
 airflow_options=`curl -L http://169.254.169.254/opc/v1/instance/metadata/airflow_options`
 airflow_executor=`curl -L http://169.254.169.254/opc/v1/instance/metadata/executor`
+airflow_database=`curl -L http://169.254.169.254/opc/v1/instance/metadata/airflow_database`
 EXECNAME="TUNING"
 log "->TUNING START"
 sed -i.bak 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
@@ -206,11 +207,44 @@ for i in `seq 1 ${#iqn[@]}`; do
         done;
 done;
 fi
+secret_lookup (){
+secret_name=$1
+compartment=`curl -s -L http://169.254.169.254/opc/v1/instance/compartmentId`
+secret_id=`oci vault secret list --compartment-id ${compartment} --name ${secret_name} --auth instance_principal | grep vaultsecret | gawk -F '"' '{print $4}'`
+
+secret_value=`python3 - << EOF
+import oci
+import sys
+import base64
+
+def read_secret_value(secret_client, secret_id):
+     
+    response = secret_client.get_secret_bundle(secret_id)
+     
+    base64_Secret_content = response.data.secret_bundle_content.content
+    base64_secret_bytes = base64_Secret_content.encode('ascii')
+    base64_message_bytes = base64.b64decode(base64_secret_bytes)
+    secret_content = base64_message_bytes.decode('ascii')
+     
+    return secret_content
+
+signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+secret_client = oci.secrets.SecretsClient(config={}, signer=signer)
+secret_id = "${secret_id}"
+secret_content = read_secret_value(secret_client, secret_id)
+print(secret_content)
+EOF`
+echo "${secret_value}"
+}
+EXECNAME="PREREQS"
+log "->Install GCC, Python"
+yum install  gcc-x86_64-linux-gnu python36 python36-devel gcc-4.8.5-39.0.3.el7.x86_64 -y >> $LOG_FILE
+if [ $airflow_database = "mysql" ]; then 
 EXECNAME="MySQL DB"
 log "->Install"
 wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
-rpm -ivh mysql-community-release-el7-5.noarch.rpm
-yum install mysql-server mysql-community-devel gcc-x86_64-linux-gnu python36 python36-devel gcc-4.8.5-39.0.3.el7.x86_64 -y
+rpm -ivh mysql-community-release-el7-5.noarch.rpm >> $LOG_FILE
+yum install mysql-server mysql-community-devel -y >> $LOG_FILE
 log "->Tuning"
 head -n -6 /etc/my.cnf >> /etc/my.cnf.new
 mv /etc/my.cnf /etc/my.cnf.rpminstall
@@ -264,10 +298,32 @@ else
 	mysql -e "GRANT ALL ON AIRFLOW.* to 'airflow'@'localhost' IDENTIFIED BY 'airflow'"
 fi
 mysql -e "FLUSH PRIVILEGES"
-EXECNAME="AIRFLOW"
+fi
+EXECNAME="OCI CLI"
 log "->Install"
-yum install python-pip -y >> $LOG_FILE
-python3 -m pip install --upgrade pip
+python3 -m pip install oci-cli --upgrade >> $LOG_FILE
+if [ $airflow_database = "oracle" ]; then 
+EXECNAME="ORACLE DB"
+log "->Get DB Information"
+airflowdb_admin=`secret_lookup AirflowDBUsername`
+airflowdb_password=`secret_lookup AirflowDBPassword`
+airflowdb_ocid=`secret_lookup AirflowDBOCID`
+log "->Generate & Download Wallet"
+mkdir -p /home/airflow
+oci db autonomous-database generate-wallet --autonomous-database-id ${airflowdb_ocid} --file /home/airflow/wallet.zip --password ${airflowdb_password} --auth instance_principal >> $LOG_FILE
+unzip /home/airflow/wallet.zip -d /home/airflow >> $LOG_FILE
+export TNS_ADMIN=/home/airflow
+log "->Relocalize sqlnet.ora"
+ed -i 's/DIRECTORY=\"?\/network\/admin\"/DIRECTORY=\"\/home\/airflow\"/g' /home/airflow/sqlnet.ora 
+fi
+log "->Install Instantclient"
+wget https://download.oracle.com/otn_software/linux/instantclient/19600/oracle-instantclient19.6-basic-19.6.0.0.0-1.x86_64.rpm
+rpm -Uvh oracle-instantclient19.6-basic-19.6.0.0.0-1.x86_64.rpm >> $LOG_FILE
+EXECNAME="AIRFLOW"
+export AIRFLOW_HOME=/opt/airflow
+log "->Install"
+yum install python3-pip -y >> $LOG_FILE
+python3 -m pip install --upgrade pip >> $LOG_FILE
 export AIRFLOW_HOME="/opt/airflow"
 if [ $airflow_options = "true" ]; then 
 	for option in ${option_list[@]}; do
@@ -278,12 +334,15 @@ if [ $airflow_options = "true" ]; then
 		fi
 	done;
 else
+	log "-->Base apache-airflow"
 	python3 -m pip install apache-airflow >> $LOG_FILE
 fi
-python3 -m pip install "apache-airflow[mysql]"
-python3 -m pip install gunicorn==19.9.0
-python3 -m pip install cx_Oracle
-python3 -m pip install oci
+if [ $airflow_database = "mysql" ]; then 
+python3 -m pip install "apache-airflow[mysql]" >> $LOG_FILE
+fi
+python3 -m pip install gunicorn==19.9.0 >> $LOG_FILE
+python3 -m pip install cx_Oracle >> $LOG_FILE
+python3 -m pip install oci >> $LOG_FILE
 if [ $airflow_executor = "celery" ]; then
 	log "->Setup RabbitMQ"
 	yum install rabbitmq-server -y >> $LOG_FILE
@@ -314,11 +373,20 @@ EOF
 fi
 log "->InitDB"
 airflow initdb >> $LOG_FILE
+if [ $airflow_database = "mysql" ]; then 
 log "->Configure MySQL connection"
 sed -i 's/sqlite:\/\/\/\/opt\/airflow\/airflow.db/mysql:\/\/airflow:airflow@127.0.0.1\/AIRFLOW/g' /opt/airflow/airflow.cfg >> $LOG_FILE
 sed -i 's/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/airflow/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/AIRFLOW/g' /opt/airflow/airflow.cfg >> $LOG_FILE
 log "->InitDB MySQL"
 airflow initdb >> $LOG_FILE
+elif [ $airflow_database = "oracle" ]; then 
+log "->Configure Oracle connection"
+DSN=`cat /home/airflow/tnsnames.ora | grep medium | gawk '{print $1}'`
+sed -i "s/sqlite:\/\/\/\/opt\/airflow\/airflow.db/oracle+cx_oracle:\/\/${airflowdb_admin}:${airflowdb_password}@${DSN}/g" /opt/airflow/airflow.cfg >> $LOG_FILE
+sed -i "s/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/airflow/result_backend = oracle+cx_oracle:\/\/${airflowdb_admin}:${airflowdb_password}@${DCN}/g" /opt/airflow/airflow.cfg >> $LOG_FILE
+log "->InitDB Oracle"
+airflow initdb >> $LOG_FILE
+fi
 if [ $airflow_executor = "celery" ]; then 
 	log "->Configure Broker for RabbitMQ"
 	sed -i 's/broker_url = sqla+mysql:\/\/airflow:airflow@localhost:3306\/airflow/broker_url = pyamqp:\/\/airflow:airflow@localhost:5672\/myvhost/g' /opt/airflow/airflow.cfg >> $LOG_FILE
@@ -459,12 +527,17 @@ wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scri
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/www_rbac_views.py -O /usr/local/lib/python3.6/site-packages/airflow/www_rbac/views.py
 wget https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/custom/www_views.py -O /usr/local/lib/python3.6/site-packages/airflow/www/views.py
 chown -R airflow:airflow /opt/airflow
+log "->Check for Fernet Key"
+fernet_key=`secret_lookup AirflowFernetKey`
+if [ ! -z ${fernet_key} ]; then 
+	sed -i "s/fernet_key = .*/fernet_key = ${fernet_key}/g" /opt/airflow/airflow.cfg
+fi
 log "->Start Scheduler"
 systemctl daemon-reload
 systemctl start airflow-scheduler
 log "->Start Webserver"
 systemctl start airflow-webserver
-if [ $airflow_executor = "celery" ]; then 
+if [ $airflow_executor = "celery" ]; then
 	systemctl start flower
 fi
 EXECNAME="FirewallD"

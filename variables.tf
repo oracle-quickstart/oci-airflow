@@ -37,7 +37,15 @@ variable "vcn_dns_label" {
   default = "airflowvcn"
 }
 
+variable "airflow_database" {
+  default = "mysql"
+}
+
 variable "airflow_options" {
+  default = "false"
+}
+
+variable "enable_instance_principals" {
   default = "false"
 }
 

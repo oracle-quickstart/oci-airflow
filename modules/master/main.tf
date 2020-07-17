@@ -23,6 +23,7 @@ resource "oci_core_instance" "Master" {
   }
 
   extended_metadata = {
+    airflow_database    = "${var.airflow_database}"
     airflow_options     = "${var.airflow_options}"
     executor		= "${var.executor}"
     all 		= "${var.all}"
