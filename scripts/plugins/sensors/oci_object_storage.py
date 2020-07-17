@@ -31,6 +31,7 @@ class BaseOCIObjectStorageSensor(BaseSensorOperator):
                  bucket_name = None,
                  object_name = None,
                  prefix = None,
+                 namespace_name = None,
                  oci_conn_id = 'oci_default',
                  verify = None,
                  *args,
@@ -52,6 +53,7 @@ class BaseOCIObjectStorageSensor(BaseSensorOperator):
         self.bucket_name = bucket_name
         self.oci_conn_id = oci_conn_id
         self.verify = verify
+        self.namespace_name = namespace_name
         self._oci_hook = None
 
     def poke(self, context):
@@ -59,13 +61,14 @@ class BaseOCIObjectStorageSensor(BaseSensorOperator):
 
     def list_objects(self, file, prefix_match=False):
         hook = self.get_oci_hook()
-        namespace_name = hook.get_namespace(compartment_id=self.compartment_id)
+        if not self.namespace_name:
+            self.namespace_name = hook.get_namespace(compartment_id=self.compartment_id)
         object_store_client = hook.get_client(hook.oci_client)
         base_arguments = dict(
             bucket_name=self.bucket_name,
             fields="size",
             limit=100,
-            namespace_name=namespace_name,
+            namespace_name=self.namespace_name,
             prefix=file,
         )
         objectsummary = object_store_client.list_objects(**base_arguments)
