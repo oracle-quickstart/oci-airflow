@@ -22,6 +22,8 @@ variable "enable_secondary_vnic" {
   default = "false"
 }
 variable "executor" {}
+variable "enable_fss" {}
+variable "nfs_ip" {}
 # ---------------------------------------------------------------------------------------------------------------------
 # Optional variables
 # You can modify these.

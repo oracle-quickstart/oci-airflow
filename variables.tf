@@ -12,6 +12,11 @@ variable "ssh_provided_key" {
 variable "useExistingVcn" {
   default = "false"
 }
+
+variable "vcn_cidr" {
+  default = ""
+}
+
 variable "hide_public_subnet" {
   default = "false"
 }
@@ -46,6 +51,18 @@ variable "airflow_options" {
 }
 
 variable "enable_instance_principals" {
+  default = "false"
+}
+
+variable "enable_fss" {
+  default = "false" 
+}
+
+variable "enable_security" {
+  default = "false"
+}
+
+variable "enable_scheduler_ha" {
   default = "false"
 }
 

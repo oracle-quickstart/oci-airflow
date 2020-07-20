@@ -8,6 +8,8 @@ option_list=(all all_dbs async aws azure celery cloudant crypto devel devel_hado
 airflow_options=`curl -L http://169.254.169.254/opc/v1/instance/metadata/airflow_options`
 airflow_executor=`curl -L http://169.254.169.254/opc/v1/instance/metadata/executor`
 airflow_database=`curl -L http://169.254.169.254/opc/v1/instance/metadata/airflow_database`
+enable_fss=`curl -L http://169.254.169.254/opc/v1/instance/metadata/enable_fss`
+nfs_ip=`curl -L http://169.254.169.254/opc/v1/instance/metadata/nfs_ip`
 EXECNAME="TUNING"
 log "->TUNING START"
 sed -i.bak 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
@@ -239,7 +241,14 @@ echo "${secret_value}"
 EXECNAME="PREREQS"
 log "->Install GCC, Python"
 yum install  gcc-x86_64-linux-gnu python36 python36-devel gcc-4.8.5-39.0.3.el7.x86_64 -y >> $LOG_FILE
-if [ $airflow_database = "mysql" ]; then 
+if [ $enable_fss = "true" ]; then 
+	log "->FSS Detected, Setup NFS dependencies"
+	yum -y install nfs-utils >> $LOG_FILE
+        log "->Mount FSS to /opt/airflow/dags"
+	mkdir -p /opt/airflow/dags
+	mount ${nfs_ip}:/airflow /opt/airflow/dags >> $LOG_FILE
+fi
+if [ $airflow_database = "mysql-local" ]; then 
 EXECNAME="MySQL DB"
 log "->Install"
 wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
@@ -337,7 +346,7 @@ else
 	log "-->Base apache-airflow"
 	python3 -m pip install apache-airflow >> $LOG_FILE
 fi
-if [ $airflow_database = "mysql" ]; then 
+if [ $airflow_database = "mysql-local" ]; then 
 python3 -m pip install "apache-airflow[mysql]" >> $LOG_FILE
 fi
 python3 -m pip install gunicorn==19.9.0 >> $LOG_FILE
@@ -373,7 +382,7 @@ EOF
 fi
 log "->InitDB"
 airflow initdb >> $LOG_FILE
-if [ $airflow_database = "mysql" ]; then 
+if [ $airflow_database = "mysql-local" ]; then 
 log "->Configure MySQL connection"
 sed -i 's/sqlite:\/\/\/\/opt\/airflow\/airflow.db/mysql:\/\/airflow:airflow@127.0.0.1\/AIRFLOW/g' /opt/airflow/airflow.cfg >> $LOG_FILE
 sed -i 's/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/airflow/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/AIRFLOW/g' /opt/airflow/airflow.cfg >> $LOG_FILE

@@ -25,6 +25,8 @@ resource "oci_core_instance" "AirflowWorker" {
 
   extended_metadata = {
     block_volume_count  = "${var.block_volume_count}"
+    enable_fss          = "${var.enable_fss}"
+    nfs_ip              = "${var.nfs_ip}"
   }
 
   timeouts {

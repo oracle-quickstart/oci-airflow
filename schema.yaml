@@ -27,9 +27,12 @@ groupings:
 - title: "Airflow Options"
   variables: 
   - ${master_instance_shape}
-  - ${enable_instance_principals}
   - ${airflow_options}
+  - ${enable_instance_principals}
+  - ${enable_security}
   - ${executor}
+  - ${enable_fss}
+  - ${enable_scheduler_ha}
   - ${airflow_database}
   - ${masterSubnet}
 - title: "Airflow Extra Packages"
@@ -96,6 +99,7 @@ groupings:
   - ${oci_service_gateway}
   - ${AD}
   - ${vpus_per_gb}
+  - ${vcn_cidr}
   visible: false
 
 variables:
@@ -253,6 +257,39 @@ variables:
     title: "Provide SSH Key"
     description: "Un-Check to generate SSH key as part of deployment process.  This is NOT recommended for persistent environments, you should provide your own key for any production deployment."
 
+  enable_fss:
+    type: boolean
+    title: "Enable FSS"
+    description: "Enable FSS, which will mount a shared NFS volume between cluster hosts in /opt/airflow/dags/ to ensure DAG files are in sync.  This is required for a celery cluster, if you don't use FSS, you should use another method to keep these files in sync."
+    default: false
+    visible:
+      and:
+        - ${airflow_options}
+        - not:
+          - eq:
+            - ${executor}
+            - "local"
+
+  enable_security:
+    type: boolean
+    title: "Enable Airflow Security"
+    description: "Enable security for Airflow web UI.   This requires use of Instance Principals, and values for the admin login and password will need to be present as Vault Secrets to leverage this functionality at deployment time.  See https://github.com/oracle-quickstart/oci-airflow#security"
+    default: false
+    visible: ${airflow_options}
+
+  enable_scheduler_ha:
+    type: boolean
+    title: "Enable Scheduler High Availability"
+    description: "Enable to provision a secondary Airflow master, which will act as a fail-over.  Useful for production deployments where you want enhanced high availability."
+    default: false
+    visible:
+      and:
+        - ${airflow_options}
+        - not:
+          - eq:
+            - ${executor}
+            - "local"
+
   executor:
     type: enum
     enum:
@@ -270,15 +307,18 @@ variables:
     description: "Click to enable Instance Principals, which will create a dynamic group allowing all instances created with this stack to manage resources in the target compartment.  This can be used instead of deploying API keys to each instance."
     default: false
     required: true
+    visible: ${airflow_options}
 
   airflow_database:
     type: enum
     enum:
-    - "mysql"
+    - "mysql-local"
+    - "mysql-oci"
     title: "Airflow Metadata Database"
-    description: "Choose a database to use for Airflow Metadata.  MySQL will download and install community edition to the Airflow Master."
-    default: "mysql"
+    description: "Choose a database to use for Airflow Metadata.  MySQL will download and install community edition to the Airflow Master for mysql-local.  Alternatively mysql-oci will provision and use MySQL as a service."
+    default: "mysql-local"
     required: "true"
+    visible: ${airflow_options}
 
   airflow_options:
     type: boolean

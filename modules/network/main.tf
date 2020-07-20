@@ -73,6 +73,16 @@ resource "oci_core_security_list" "PublicSubnet" {
     protocol    = "6"
   }
 
+  egress_security_rules {
+    protocol = "17"
+    destination = "0.0.0.0/0"
+
+    udp_options {
+      min = 111
+      max = 111
+    }
+  }
+
   ingress_security_rules {
     tcp_options {
       max = 22
@@ -107,6 +117,42 @@ resource "oci_core_security_list" "PublicSubnet" {
     protocol = "6"
     source   = "${var.VPC_CIDR}"
   }
+
+  ingress_security_rules {
+    tcp_options {
+      min = 2048
+      max = 2050
+    }
+    protocol = "6"
+    source   = "${var.VPC_CIDR}"
+  }
+
+  ingress_security_rules {
+    udp_options {
+      min = 2048
+      max = 2048
+    }
+    protocol = "17"
+    source   = "${var.VPC_CIDR}"
+  }
+
+  ingress_security_rules {
+    tcp_options {
+      min = 111
+      max = 111
+    }
+    protocol = "6"
+    source   = "${var.VPC_CIDR}"
+  }
+
+  ingress_security_rules {
+    udp_options {
+      min = 111
+      max = 111
+    }
+    protocol = "17"
+    source   = "${var.VPC_CIDR}"
+  }
 }
 
 resource "oci_core_security_list" "PrivateSubnet" {
@@ -119,13 +165,60 @@ resource "oci_core_security_list" "PrivateSubnet" {
     destination = "0.0.0.0/0"
     protocol    = "6"
   }
+
   egress_security_rules {
     protocol    = "6"
     destination = "${var.VPC_CIDR}"
   }
 
+  egress_security_rules {
+    protocol = "17"
+    destination = "0.0.0.0/0"
+
+    udp_options {
+      min = 111
+      max = 111
+    }
+  } 
+
   ingress_security_rules {
     protocol = "6"
+    source   = "${var.VPC_CIDR}"
+  }
+
+  ingress_security_rules {
+    tcp_options {
+      min = 2048
+      max = 2050
+    }
+    protocol = "6"
+    source   = "${var.VPC_CIDR}"
+  }
+
+  ingress_security_rules {
+    udp_options {
+      min = 2048
+      max = 2048
+    }
+    protocol = "17"
+    source   = "${var.VPC_CIDR}"
+  }
+
+  ingress_security_rules {
+    tcp_options {
+      min = 111
+      max = 111
+    }
+    protocol = "6"
+    source   = "${var.VPC_CIDR}"
+  }
+
+  ingress_security_rules {
+    udp_options {
+      min = 111
+      max = 111
+    }
+    protocol = "17"
     source   = "${var.VPC_CIDR}"
   }
 }

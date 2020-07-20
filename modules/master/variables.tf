@@ -50,7 +50,8 @@ variable "samba" {}
 variable "slack" {}
 variable "ssh" {}
 variable "vertica" {}
-
+variable "enable_fss" {}
+variable "nfs_ip" {}
 # ---------------------------------------------------------------------------------------------------------------------
 # Optional variables
 # You can modify these.

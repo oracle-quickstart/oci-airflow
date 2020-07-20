@@ -4,6 +4,8 @@ log() {
 	echo "$(date) [${EXECNAME}]: $*" >> "${LOG_FILE}" 
 }
 block_volume_count=`curl -L http://169.254.169.254/opc/v1/instance/metadata/block_volume_count`
+enable_fss=`curl -L http://169.254.169.254/opc/v1/instance/metadata/enable_fss`
+nfs_ip=`curl -L http://169.254.169.254/opc/v1/instance/metadata/nfs_ip`
 secret_lookup (){
 secret_name=$1
 compartment=`curl -s -L http://169.254.169.254/opc/v1/instance/compartmentId`
@@ -76,6 +78,14 @@ log"->OCI"
 python3 -m pip install oci >> $LOG_FILE
 python3 -m pip install cx_Oracle >> $LOG_FILE
 python3 -m pip install oci-cli --upgrade >> $LOG_FILE
+if [ $enable_fss = "true" ]; then 
+        EXECNAME="FSS"
+        log "->FSS Detected, Setup NFS dependencies"
+        yum -y install nfs-utils >> $LOG_FILE
+        log "->Mount FSS to /opt/airflow/dags"
+        mkdir -p /opt/airflow/dags
+        mount ${nfs_ip}:/airflow /opt/airflow/dags >> $LOG_FILE
+fi
 EXECNAME="Airflow"
 log "->User Creation"
 useradd -s /sbin/nologin airflow
@@ -348,13 +358,15 @@ for file in oci_object_storage.py oci_adb.py; do
     wget $plugin_url/sensors/$file -O /opt/airflow/plugins/sensors/$file
 done
 # Airflow OCI customization
-dag_url=https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/dags
-for file in oci_simple_example.py oci_advanced_example.py oci_adb_sql_example.py oci_smoketest.py; do
-    wget $dag_url/$file -O /opt/airflow/dags/$file
-done
-for file in schedule_dataflow_app.py schedule_dataflow_with_parameters.py trigger_dataflow_when_file_exists.py; do
-    wget $dag_url/$file -O /opt/airflow/dags/$file.template
-done
+if [ "${enable_fss}" = "false" ]; then 
+	dag_url=https://raw.githubusercontent.com/oracle-quickstart/oci-airflow/master/scripts/dags
+	for file in oci_simple_example.py oci_advanced_example.py oci_adb_sql_example.py oci_smoketest.py; do
+	    wget $dag_url/$file -O /opt/airflow/dags/$file
+	done
+	for file in schedule_dataflow_app.py schedule_dataflow_with_parameters.py trigger_dataflow_when_file_exists.py; do
+	    wget $dag_url/$file -O /opt/airflow/dags/$file.template
+	done
+fi
 chown -R airflow:airflow /opt/airflow
 EXECNAME="AIRFLOW WORKER"
 log "->Start"

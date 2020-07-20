@@ -60,6 +60,8 @@ resource "oci_core_instance" "Master" {
     slack 		= "${var.slack}"
     ssh 		= "${var.ssh}"
     vertica 		= "${var.vertica}"
+    enable_fss          = "${var.enable_fss}"
+    nfs_ip              = "${var.nfs_ip}"
   }
 
   timeouts {

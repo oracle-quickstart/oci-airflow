@@ -63,6 +63,8 @@ module "master" {
 	slack = "${var.slack}"
 	ssh = "${var.ssh}"
 	vertica = "${var.vertica}"
+	enable_fss = "${var.enable_fss}"
+        nfs_ip = "${module.fss.nfs-ip}"
 }
 
 module "worker" {
@@ -81,4 +83,6 @@ module "worker" {
 	block_volume_count = "${var.enable_block_volumes ? var.block_volumes_per_worker : 0}"
 	vpus_per_gb = "${var.customize_block_volume_performance ? data.null_data_source.vpus.outputs["block_vpus"] : 10}"
 	executor = "${var.executor}"
+	enable_fss = "${var.enable_fss}"
+        nfs_ip = "${module.fss.nfs-ip}"
 }
