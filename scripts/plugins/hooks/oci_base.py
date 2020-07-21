@@ -58,27 +58,36 @@ class OCIBaseHook(BaseHook):
 
     def get_config(self):
         try:
-            connection_object = self.get_connection(self.oci_conn_id)
-            extra_config = connection_object.extra_dejson
-            if extra_config.get("extra__oci__tenancy"):
-                self.config = {
-                    "log_requests": False,
-                    "additional_user_agent": '',
-                    "pass_phrase": None,
-                    "user": connection_object.login,
-                    "fingerprint": extra_config["extra__oci__fingerprint"],
-                    "key_file": extra_config["extra__oci__key_file"],
-                    "tenancy": extra_config["extra__oci__tenancy"],
-                    "region": extra_config["extra__oci__region"]
-                }
-                self.client_kwargs = dict()
-            elif "config_path" in extra_config:
-                if path.exists(extra_config["config_path"]) is True:
-                    self.config = oci.config.from_file(extra_config["config_path"])
+            try:
+                connection_object = self.get_connection(self.oci_conn_id)
+                extra_config = connection_object.extra_dejson
+                if extra_config.get("extra__oci__tenancy"):
+                    self.config = {
+                        "log_requests": False,
+                        "additional_user_agent": '',
+                        "pass_phrase": None,
+                        "user": connection_object.login,
+                        "fingerprint": extra_config["extra__oci__fingerprint"],
+                        "key_file": extra_config["extra__oci__key_file"],
+                        "tenancy": extra_config["extra__oci__tenancy"],
+                        "region": extra_config["extra__oci__region"]
+                    }
                     self.client_kwargs = dict()
+                elif "config_path" in extra_config:
+                    if path.exists(extra_config["config_path"]) is True:
+                        self.config = oci.config.from_file(extra_config["config_path"])
+                        self.client_kwargs = dict()
+                    else:
+                        raise AirflowException('Config Path %s not found' % extra_config["config_path"])
                 else:
-                    raise AirflowException('Config Path %s not found' % extra_config["config_path"])
-            else:
+                    self.log.info("Failed to find valid oci config in Airflow, falling back to Instance Principals")
+                    self.signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+                    self.client_kwargs = dict(signer=self.signer)
+                    self.config = {
+                        "tenancy": self.signer.tenancy_id,
+                        "region": self.signer.region,
+                    }
+            except:
                 self.log.info("Failed to find valid oci config in Airflow, falling back to Instance Principals")
                 self.signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
                 self.client_kwargs = dict(signer=self.signer)

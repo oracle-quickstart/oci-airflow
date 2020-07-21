@@ -3,7 +3,7 @@ data "oci_core_vcn" "vcn_info" {
 }
 
 data "oci_core_subnet" "master_subnet" {
-  subnet_id = "${var.useExistingVcn ? var.clusterSubnet : module.network.public-id}"
+  subnet_id = "${var.useExistingVcn ? var.masterSubnet : module.network.public-id}"
 }
 
 data "oci_core_subnet" "cluster_subnet" {
@@ -16,16 +16,21 @@ data "null_data_source" "vpus" {
   }
 }
 
+data "null_data_source" "values" {
+  inputs = {
+    airflow_master = "airflow-master-1.${data.oci_core_subnet.master_subnet.dns_label}.${data.oci_core_vcn.vcn_info.vcn_domain_name}"
+  }
+}
+
 module "master" {
         source  = "./modules/master"
-        region = "${var.region}"
         compartment_ocid = "${var.compartment_ocid}"
         subnet_id =  "${var.useExistingVcn ? var.masterSubnet : module.network.public-id}"
         availability_domain = "${var.availability_domain}"
         image_ocid = "${var.OELImageOCID[var.region]}"
         ssh_public_key = "${var.provide_ssh_key ? var.ssh_provided_key : tls_private_key.key.public_key_openssh}"
 	master_instance_shape = "${var.master_instance_shape}"
-	user_data = "${base64encode(file("scripts/master_boot.sh"))}"
+	user_data = "${base64gzip(file("scripts/master_boot.sh"))}"
 	executor = "${var.executor}"
 	airflow_database = "${var.airflow_database}"
 	airflow_options = "${var.airflow_options}"
@@ -65,6 +70,8 @@ module "master" {
 	vertica = "${var.vertica}"
 	enable_fss = "${var.enable_fss}"
         nfs_ip = "${module.fss.nfs-ip}"
+	enable_security = "${var.enable_security}"
+	oci_mysql_ip = "${var.airflow_database == "mysql-oci" ? module.oci-mysql.mysqldb-ip : ""}"
 }
 
 module "worker" {
@@ -85,4 +92,6 @@ module "worker" {
 	executor = "${var.executor}"
 	enable_fss = "${var.enable_fss}"
         nfs_ip = "${module.fss.nfs-ip}"
+	airflow_master =  "${data.null_data_source.values.outputs["airflow_master"]}"
+	oci_mysql_ip = "${var.airflow_database == "mysql-oci" ? module.oci-mysql.mysqldb-ip : ""}"
 }

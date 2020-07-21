@@ -62,6 +62,8 @@ resource "oci_core_instance" "Master" {
     vertica 		= "${var.vertica}"
     enable_fss          = "${var.enable_fss}"
     nfs_ip              = "${var.nfs_ip}"
+    enable_security     = "${var.enable_security}"
+    oci_mysql_ip        = "${var.oci_mysql_ip}"
   }
 
   timeouts {

@@ -4,7 +4,6 @@
 # Instructions on that are here: https://github.com/oci-quickstart/oci-prerequisites
 # ---------------------------------------------------------------------------------------------------------------------
 
-variable "region" {}
 variable "compartment_ocid" {}
 variable "ssh_public_key" {}
 variable "subnet_id" {}
@@ -52,6 +51,8 @@ variable "ssh" {}
 variable "vertica" {}
 variable "enable_fss" {}
 variable "nfs_ip" {}
+variable "enable_security" {}
+variable "oci_mysql_ip" {}
 # ---------------------------------------------------------------------------------------------------------------------
 # Optional variables
 # You can modify these.

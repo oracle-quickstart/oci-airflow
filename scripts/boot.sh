@@ -6,6 +6,9 @@ log() {
 block_volume_count=`curl -L http://169.254.169.254/opc/v1/instance/metadata/block_volume_count`
 enable_fss=`curl -L http://169.254.169.254/opc/v1/instance/metadata/enable_fss`
 nfs_ip=`curl -L http://169.254.169.254/opc/v1/instance/metadata/nfs_ip`
+airflow_master=`curl -L http://169.254.169.254/opc/v1/instance/metadata/airflow_master`
+oci_mysql_ip=`curl -L http://169.254.169.254/opc/v1/instance/metadata/oci_mysql_ip`
+airflow_database=`curl -L http://169.254.169.254/opc/v1/instance/metadata/airflow_database`
 secret_lookup (){
 secret_name=$1
 compartment=`curl -s -L http://169.254.169.254/opc/v1/instance/compartmentId`
@@ -85,6 +88,8 @@ if [ $enable_fss = "true" ]; then
         log "->Mount FSS to /opt/airflow/dags"
         mkdir -p /opt/airflow/dags
         mount ${nfs_ip}:/airflow /opt/airflow/dags >> $LOG_FILE
+	log "->Add FSS to /etc/fstab"
+	echo "${nfs_ip}:/airflow	/opt/airflow/dags	nfs	defaults,_netdev,nofail,noatime 0 0" >> /etc/fstab
 fi
 EXECNAME="Airflow"
 log "->User Creation"
@@ -92,10 +97,17 @@ useradd -s /sbin/nologin airflow
 mkdir -p /opt/airflow
 chown airflow:airflow /opt/airflow
 log "-->Service Config"
-airflow_master=`nslookup airflow-master-1 | grep Name | gawk '{print $2}'`
-airflow_broker="pyamqp:\/\/airflow:airflow@${airflow_master}:5672\/myvhost"
-airflow_pysql="mysql+pymysql:\/\/airflow:airflow@${airflow_master}\/AIRFLOW"
-airflow_sql="db+mysql://airflow:airflow@${airflow_master}:3306/AIRFLOW"
+if [ ${airflow_database} = "mysql-local" ]; then 
+	airflow_broker="pyamqp:\/\/airflow:airflow@${airflow_master}:5672\/myvhost"
+	airflow_pysql="mysql+pymysql:\/\/airflow:airflow@${airflow_master}\/AIRFLOW"
+	airflow_sql="db+mysql://airflow:airflow@${airflow_master}:3306/AIRFLOW"
+elif [ ${airflow_database} = "mysql-oci" ]; then 
+        airflowdb_admin=`secret_lookup AirflowDBUsername`
+        airflowdb_password=`secret_lookup AirflowDBPassword`
+	airflow_broker="pyamqp:\/\/airflow:airflow@${airflow_master}:5672\/myvhost"
+        airflow_pysql="mysql+pymysql:\/\/${airflowdb_admin}:${airflowdb_password}@${oci_mysql_ip}\/AIRFLOW"
+        airflow_sql="db+mysql://${airflowdb_admin}:${airflowdb_password}@${oci_mysql_ip}:3306/AIRFLOW"
+fi
 cat > /etc/sysconfig/airflow << EOF
 #
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -162,10 +174,13 @@ systemctl stop airflow-worker >> $LOG_FILE
 sleep 15
 if [ -f /opt/airflow/airflow.cfg ]; then
 	log "-->/opt/airflow/airflow.cfg found, modifying"
+        log "--->Fetching Fernet Key"
 	fernet_key=`secret_lookup AirflowFernetKey`
 	if [ ! -z ${fernet_key} ]; then 
+                log "---->Found, applying"
 		sed -i "s/fernet_key = .*/fernet_key = ${fernet_key}/g" /opt/airflow/airflow.cfg
 	fi
+        log "--->Modifying executor, metadata, broker, results_backend config"
 	sed -i 's/executor = SequentialExecutor/executor = CeleryExecutor/g' /opt/airflow/airflow.cfg
 	sed -e "s/sqlite:\/\/\/\/opt\/airflow\/airflow.db/${airflow_pysql}/g" -i /opt/airflow/airflow.cfg
 	sed -e "s/broker_url = sqla+mysql:\/\/airflow:airflow@localhost:3306\/airflow/broker_url = ${airflow_broker}/g" -i /opt/airflow/airflow.cfg

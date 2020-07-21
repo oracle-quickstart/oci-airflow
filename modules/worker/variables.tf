@@ -24,6 +24,8 @@ variable "enable_secondary_vnic" {
 variable "executor" {}
 variable "enable_fss" {}
 variable "nfs_ip" {}
+variable "airflow_master" {}
+variable "oci_mysql_ip" {}
 # ---------------------------------------------------------------------------------------------------------------------
 # Optional variables
 # You can modify these.

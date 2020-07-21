@@ -35,6 +35,19 @@ groupings:
   - ${enable_scheduler_ha}
   - ${airflow_database}
   - ${masterSubnet}
+- title: "OCI MySQL"
+  variables:
+  - ${mysqladmin_username}
+  - ${mysqladmin_password}
+  - ${mysql_shape}
+  - ${enable_mysql_backups}
+  visible:
+    and:
+      - ${airflow_options}
+      - not:
+        - eq:
+          - ${airflow_database}
+          - "mysql-local"
 - title: "Airflow Extra Packages"
   variables:
   - ${all}
@@ -250,7 +263,7 @@ variables:
     type: boolean
     title: "Enable Block Volumes for Data"
     description: "Check to enable Block Volumes for use with Data. This is optional for BM.Dense hosts, required for all others."
-    default: true 
+    default: false
 
   provide_ssh_key:
     type: boolean
@@ -273,7 +286,7 @@ variables:
   enable_security:
     type: boolean
     title: "Enable Airflow Security"
-    description: "Enable security for Airflow web UI.   This requires use of Instance Principals, and values for the admin login and password will need to be present as Vault Secrets to leverage this functionality at deployment time.  See https://github.com/oracle-quickstart/oci-airflow#security"
+    description: "Enable security for Airflow web UI.   This requires use of Instance Principals, and values for AirflowLogin  and AirflowPassword will need to be present as Vault Secrets to leverage this functionality at deployment time.  See https://github.com/oracle-quickstart/oci-airflow#security"
     default: false
     visible: ${airflow_options}
 
@@ -315,10 +328,66 @@ variables:
     - "mysql-local"
     - "mysql-oci"
     title: "Airflow Metadata Database"
-    description: "Choose a database to use for Airflow Metadata.  MySQL will download and install community edition to the Airflow Master for mysql-local.  Alternatively mysql-oci will provision and use MySQL as a service."
+    description: "Choose a database to use for Airflow Metadata.  MySQL will download and install community edition to the Airflow Master for mysql-local.  Alternatively mysql-oci will provision and use MySQL as a service - ensure when using this option the MySQL service is available in your target region."
     default: "mysql-local"
     required: "true"
     visible: ${airflow_options}
+
+  mysql_shape:
+    type: enum
+    enum:
+    - "VM.Standard.E2.1"
+    - "VM.Standard.E2.2"
+    - "VM.Standard.E2.3"
+    - "VM.Standard.E2.4"
+    title: "OCI MySQL instance shape"
+    description: "Shape of the OCI MySQL intance"
+    default: "VM.Standard.E2.2"
+    visible:
+      and:
+        - ${airflow_options}
+        - not:
+          - eq:
+            - ${airflow_database}
+            - "mysql-local"
+
+  mysqladmin_username:
+    type: string
+    title: "OCI MySQL username"
+    description: "Enter a username for the MySQL database user"
+    default: "mysqladmin"
+    visible:
+      and:
+        - ${airflow_options}
+        - not:
+          - eq:
+            - ${airflow_database}
+            - "mysql-local"
+
+  mysqladmin_password:
+    type: password
+    title: "OCI MySQL password"
+    description: "Enter a password for the MySQL database user"
+    visible: 
+      and:
+        - ${airflow_options}
+        - not:
+          - eq:
+            - ${airflow_database}
+            - "mysql-local"
+
+  enable_mysql_backups:
+    type: boolean
+    title: "Enable MySQL backups"
+    description: "Enable MySQL backups for OCI MySQL database"
+    default: false
+    visible:
+      and:
+        - ${airflow_options}
+        - not:
+          - eq:
+            - ${airflow_database}
+            - "mysql-local"
 
   airflow_options:
     type: boolean

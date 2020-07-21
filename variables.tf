@@ -66,6 +66,22 @@ variable "enable_scheduler_ha" {
   default = "false"
 }
 
+variable "mysqladmin_password" {
+  default = ""
+}
+
+variable "mysqladmin_username" {
+  default = "mysqladmin" 
+}
+
+variable "mysql_shape" {
+  default = "VM.Standard.E2.2"
+}
+
+variable "enable_mysql_backups" {
+  default = "false"
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # ORM Schema variables
 # You should modify these based on deployment requirements.
@@ -74,7 +90,7 @@ variable "enable_scheduler_ha" {
 
 
 variable "enable_block_volumes" {
-  default = "true"
+  default = "false"
 }
 
 variable "provide_ssh_key" {

@@ -15,7 +15,7 @@ resource "oci_core_instance" "AirflowWorker" {
     subnet_id		= "${var.subnet_id}"
     display_name        = "AirflowWorker ${format("%01d", count.index+1)}"
     hostname_label	= "AirflowWorker-${format("%01d", count.index+1)}"
-    assign_public_ip  	= "true"
+    assign_public_ip  	= "${var.hide_public_subnet ? false : true}"
   }
 
   metadata = {
@@ -27,6 +27,8 @@ resource "oci_core_instance" "AirflowWorker" {
     block_volume_count  = "${var.block_volume_count}"
     enable_fss          = "${var.enable_fss}"
     nfs_ip              = "${var.nfs_ip}"
+    airflow_master      = "${var.airflow_master}"
+    oci_mysql_ip        = "${var.oci_mysql_ip}"
   }
 
   timeouts {

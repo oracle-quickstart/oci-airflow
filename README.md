@@ -15,28 +15,49 @@ This template will build VCN/Subnets as part of deployment, but also has options
 
 ## Deployment customization
 
-The schema file offers an advanced deployment options.   When enabled you can select which airflow libraries are installed during deployment.   Defaults are for SSH, Oracle, and MySQL. Note that the apache-airflow[mysql] package is required for installation.   If disabled this will result in a deployment failure.
+The schema file offers an advanced deployment options.   When enabled you can select which airflow libraries are installed during deployment, choose which executor you want to use, and customize other deployment parameters for metadata database, security, and high availability.   Defaults are for SSH, Oracle, and MySQL. Note that the apache-airflow[mysql] package is required for installation.   If disabled this will result in a deployment failure.
 
 ## Metadata Database
 
+### mysql-local
 This template uses a community edition of MySQL for Airflow metadata.   This is downloaded and installed during provisioning.   The default root database password is set in the [master_boot.sh](https://github.com/oracle-quickstart/oci-airflow/blob/master/scripts/master_boot.sh#L256) which is run in CloudInit.  It's highly suggested you change the password either prior to deployment, or afterwards to something more secure.
 
-*Oracle Database use for Airflow metadata is in development*
+### mysql-oci
+This deploys a MySQL DB instance on OCI and uses it for metadata in Airflow.  You will need to set some Secret Vault values prior to deployment for this to work, see the Security section below.
+*In Development*
+
+### oracle
+*In Development* - This requires some updates to Alembic to work properly.
 
 ## Celery for parallelized execution
 
 This template also supports celery executor to parallelize execution among multiple workers.  If using celery and pre-existing VCN/Subnet, ensure a security list entry is present allowing TCP 5555 ingress/egress for the Flower UI on the Airflow master.
 
-Note that the entry in `/opt/airflow/airflow.cfg` for `fernet_key` will need to be the same on workers as it is for the Airflow master when using local secrets db.  This is something you currently will have to manually set on each worker, in adddition to ensuring `/opt/airflow/dags/` is consistent among all hosts in the cluster, and an API key is present (if using local API key) on each host as well.
+See the Security section below for detail on synchronization of Fernet Key among cluster hosts.
 
-*Currently this functionality is in development*
+### FSS
+OCI Filesystem Service is offered when using celery.   Enabling this will create an NFS mount on each host in the cluster for `/opt/airflow/dags`.  This provides a single location to manage DAGs in the cluster, and ensures any changes will be in sync among all cluster hosts.
 
 ## OCI Hooks, Operators, Sensors
 
 This template automatically downloads and installs hooks, operators, and sensors for OCI services into `/opt/airflow/plugins`.   These plugins are fetched remotely by the airflow master instance from this github repository using `wget` as part of the CloudInit deployment.   Long term these hooks, operators and sensors will be committed upstream to Apache Airflow and be included as part of the native deployment.
 
 ## Security
-This template does not currently include [Airflow security](https://airflow.apache.org/docs/stable/security.html) out of the box.   It's highly encouraged you enable this after deployment.
+[Instance Principals](https://docs.cloud.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm) needs to be enabled for all functionality below.  This is offered as part of deployment, but you may need to have your tenancy administrator enable policies for you if you don't have privileges to the tenancy root.
+
+This template offers basic [Airflow security](https://airflow.apache.org/docs/stable/security.html) when deploying using ORM.   Click Advanced Options > Enable Security to enable local password auth for the Airflow UI.   The password for this needs to be setup in OCI Secrets Vault prior to deployment.
+
+See [Overview of Vault](https://docs.cloud.oracle.com/en-us/iaas/Content/KeyManagement/Concepts/keyoverview.htm) for more information on how to setup and configure a Vault.   
+
+The Secrets Vault should be in the same compartment where you are deploying Airflow, and should use the following syntax:
+
+![Airflow Secrets](images/SecretsExample.png) 
+
+* AirflowPassword - Password for the Airflow Web UI
+* AirflowUsername - Username for the Airflow Web UI
+* AirflowFernetKey - [Generate a Fernet Key](https://bcb.github.io/airflow/fernet-key) which is synchronized for celery deployments.
+* AirflowDBUsername - Username for the Metadata Database (not used in mysql-local)
+* AirflowDBPassword - Password for the Metadata Database (not useed in mysql-local)
 
 ## Logging
 
