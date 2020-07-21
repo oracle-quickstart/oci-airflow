@@ -14,6 +14,7 @@ resource "oci_mysql_mysql_db_system" "airflow_database" {
     }
     description = "Airflow Database"
     mysql_version = "${data.oci_mysql_mysql_versions.mysql_versions.0.versions.0.versions.0.version}"
+    ip_address    = "${var.oci_mysql_ip}"
     port          = "3306"
     port_x        = "33306"
 }

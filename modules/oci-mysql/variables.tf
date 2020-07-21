@@ -6,3 +6,4 @@ variable "compartment_ocid" {}
 variable "mysql_shape" {}
 variable "subnet_id" {}
 variable "enable_mysql_backups" {}
+variable "oci_mysql_ip" {}

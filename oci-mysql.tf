@@ -8,4 +8,5 @@ module "oci-mysql" {
   mysql_shape = "${var.mysql_shape}"
   subnet_id =  "${var.useExistingVcn ? var.masterSubnet : module.network.public-id}"
   enable_mysql_backups = "${var.enable_mysql_backups}"
+  oci_mysql_ip = "${var.oci_mysql_ip}"
 }

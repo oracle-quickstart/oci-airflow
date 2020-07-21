@@ -71,7 +71,7 @@ module "master" {
 	enable_fss = "${var.enable_fss}"
         nfs_ip = "${module.fss.nfs-ip}"
 	enable_security = "${var.enable_security}"
-	oci_mysql_ip = "${var.airflow_database == "mysql-oci" ? module.oci-mysql.mysqldb-ip : ""}"
+	oci_mysql_ip = "${var.airflow_database == "mysql-oci" ? var.oci_mysql_ip : ""}"
 }
 
 module "worker" {
@@ -93,5 +93,5 @@ module "worker" {
 	enable_fss = "${var.enable_fss}"
         nfs_ip = "${module.fss.nfs-ip}"
 	airflow_master =  "${data.null_data_source.values.outputs["airflow_master"]}"
-	oci_mysql_ip = "${var.airflow_database == "mysql-oci" ? module.oci-mysql.mysqldb-ip : ""}"
+	oci_mysql_ip = "${var.airflow_database == "mysql-oci" ? var.oci_mysql_ip : ""}"
 }

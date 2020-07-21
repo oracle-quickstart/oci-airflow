@@ -40,6 +40,7 @@ groupings:
   - ${mysqladmin_username}
   - ${mysqladmin_password}
   - ${mysql_shape}
+  - ${oci_mysql_ip}
   - ${enable_mysql_backups}
   visible:
     and:
@@ -375,6 +376,18 @@ variables:
           - eq:
             - ${airflow_database}
             - "mysql-local"
+
+  oci_mysql_ip:
+    type: string
+    title: "OCI MySQL IP"
+    description: "Private IP Address for the OCI MySQL server.  The default uses the default VCN configuration when creating a public subnet, if using a custom VCN or changing the VCN CIDR you will need to adjust this accordingly or it will fail."
+    visible:
+      and:
+        - ${airflow_options}
+        - not:
+          - eq:
+            - ${airflow_database}
+            - "mysql-local"    
 
   enable_mysql_backups:
     type: boolean

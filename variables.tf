@@ -82,6 +82,10 @@ variable "enable_mysql_backups" {
   default = "false"
 }
 
+variable "oci_mysql_ip" {
+  default = "10.0.2.8"
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # ORM Schema variables
 # You should modify these based on deployment requirements.
