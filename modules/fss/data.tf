@@ -1,4 +1,5 @@
 data "oci_core_private_ips" "fss_ip" {
+  count = "${var.enable_fss ? 1 : 0}"
   subnet_id = "${var.subnet_id}"
 
   filter {
