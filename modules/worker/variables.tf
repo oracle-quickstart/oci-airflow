@@ -26,6 +26,7 @@ variable "enable_fss" {}
 variable "nfs_ip" {}
 variable "airflow_master" {}
 variable "oci_mysql_ip" {}
+variable "airflow_database" {}
 # ---------------------------------------------------------------------------------------------------------------------
 # Optional variables
 # You can modify these.

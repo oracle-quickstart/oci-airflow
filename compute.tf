@@ -94,4 +94,5 @@ module "worker" {
         nfs_ip = "${module.fss.nfs-ip}"
 	airflow_master =  "${data.null_data_source.values.outputs["airflow_master"]}"
 	oci_mysql_ip = "${var.airflow_database == "mysql-oci" ? var.oci_mysql_ip : ""}"
+	airflow_database = "${var.airflow_database}"
 }

@@ -29,6 +29,7 @@ resource "oci_core_instance" "AirflowWorker" {
     nfs_ip              = "${var.nfs_ip}"
     airflow_master      = "${var.airflow_master}"
     oci_mysql_ip        = "${var.oci_mysql_ip}"
+    airflow_database    = "${var.airflow_database}"
   }
 
   timeouts {

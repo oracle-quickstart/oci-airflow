@@ -100,13 +100,13 @@ log "-->Service Config"
 if [ ${airflow_database} = "mysql-local" ]; then 
 	airflow_broker="pyamqp:\/\/airflow:airflow@${airflow_master}:5672\/myvhost"
 	airflow_pysql="mysql+pymysql:\/\/airflow:airflow@${airflow_master}\/AIRFLOW"
-	airflow_sql="db+mysql://airflow:airflow@${airflow_master}:3306/AIRFLOW"
+	airflow_sql="db+mysql:\/\/airflow:airflow@${airflow_master}:3306\/AIRFLOW"
 elif [ ${airflow_database} = "mysql-oci" ]; then 
         airflowdb_admin=`secret_lookup AirflowDBUsername`
         airflowdb_password=`secret_lookup AirflowDBPassword`
 	airflow_broker="pyamqp:\/\/airflow:airflow@${airflow_master}:5672\/myvhost"
         airflow_pysql="mysql+pymysql:\/\/${airflowdb_admin}:${airflowdb_password}@${oci_mysql_ip}\/AIRFLOW"
-        airflow_sql="db+mysql://${airflowdb_admin}:${airflowdb_password}@${oci_mysql_ip}:3306/AIRFLOW"
+        airflow_sql="db+mysql:\/\/${airflowdb_admin}:${airflowdb_password}@${oci_mysql_ip}:3306\/AIRFLOW"
 fi
 cat > /etc/sysconfig/airflow << EOF
 #
@@ -182,9 +182,9 @@ if [ -f /opt/airflow/airflow.cfg ]; then
 	fi
         log "--->Modifying executor, metadata, broker, results_backend config"
 	sed -i 's/executor = SequentialExecutor/executor = CeleryExecutor/g' /opt/airflow/airflow.cfg
-	sed -e "s/sqlite:\/\/\/\/opt\/airflow\/airflow.db/${airflow_pysql}/g" -i /opt/airflow/airflow.cfg
-	sed -e "s/broker_url = sqla+mysql:\/\/airflow:airflow@localhost:3306\/airflow/broker_url = ${airflow_broker}/g" -i /opt/airflow/airflow.cfg
-	sed -e "s/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/airflow/result_backend = ${airflow_sql}/g" -i /opt/airflow/airflow.cfg
+	sed -i "s/sqlite:\/\/\/\/opt\/airflow\/airflow.db/${airflow_pysql}/g" -i /opt/airflow/airflow.cfg
+	sed -i "s/broker_url = sqla+mysql:\/\/airflow:airflow@localhost:3306\/airflow/broker_url = ${airflow_broker}/g" -i /opt/airflow/airflow.cfg
+	sed -i "s/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/airflow/result_backend = ${airflow_sql}/g" -i /opt/airflow/airflow.cfg
 else
 	log "-->/opt/airflow/airflow.cfg NOT FOUND!!!!"
 fi
