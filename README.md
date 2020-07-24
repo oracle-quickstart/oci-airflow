@@ -1,7 +1,7 @@
 # OCI-Airflow
 [Apache Airflow](https://airflow.apache.org/) on Oracle Cloud Infrastructure
 
-This Quick Start uses [OCI Resource Manager](https://docs.cloud.oracle.com/iaas/Content/ResourceManager/Concepts/resourcemanager.htm) to make deployment quite easy.  Simply [download the latest .zip](https://github.com/oracle-quickstart/oci-airflow/archive/master.zip) and follow the [Resource Manager instructions](https://docs.cloud.oracle.com/en-us/iaas/Content/ResourceManager/Tasks/managingstacksandjobs.htm) for how to build a stack.
+This Quick Start uses [OCI Resource Manager](https://docs.cloud.oracle.com/iaas/Content/ResourceManager/Concepts/resourcemanager.htm)(ORM) to make deployment quite easy.  Simply [download the latest .zip](https://github.com/oracle-quickstart/oci-airflow/archive/master.zip) and follow the [Resource Manager instructions](https://docs.cloud.oracle.com/en-us/iaas/Content/ResourceManager/Tasks/managingstacksandjobs.htm) for how to build a stack.
 
 **This deployment requires using the included schema.yaml file with ORM.**   The GitHub zip must be repackaged so that it's contents are top-level prior to creating the ORM Stack for the schema to be read.  This is a straight forward process:
 
