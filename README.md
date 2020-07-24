@@ -3,19 +3,18 @@
 
 This Quick Start uses [OCI Resource Manager](https://docs.cloud.oracle.com/iaas/Content/ResourceManager/Concepts/resourcemanager.htm) to make deployment quite easy.  Simply [download the latest .zip](https://github.com/oracle-quickstart/oci-airflow/archive/master.zip) and follow the [Resource Manager instructions](https://docs.cloud.oracle.com/en-us/iaas/Content/ResourceManager/Tasks/managingstacksandjobs.htm) for how to build a stack.
 
-It is highly suggested you use the included schema file to make deployment even easier.   In order to leverage this feature, the GitHub zip must be repackaged so that it's contents are top-level prior to creating the ORM Stack.  This is a straight forward process:
+**This deployment requires using the included schema.yaml file with ORM.**   The GitHub zip must be repackaged so that it's contents are top-level prior to creating the ORM Stack for the schema to be read.  This is a straight forward process:
 
                 unzip oci-airflow-master.zip
                 cd oci-airflow-master
                 zip -r oci-airflow.zip *
 
-Use the `oci-airflow.zip` file created in the last step to create the ORM Stack.  The schema file can even be customized for your use, enabling you to build a set of approved variables for deployment.
+Use the `oci-airflow.zip` file created in the last step to create the ORM Stack.  The schema file can even be customized for your use, enabling you to build a set of approved variables for deployment if desired.
 
 This template will build VCN/Subnets as part of deployment, but also has options for using pre-existing VCN/Subnets.  If using pre-existing network topology, ensure you have a security list entry allowing port TCP 8080 ingress/egress for access to the Airflow UI.   Also ensure a gateway is present to allow Internet access for the Airflow host, as Airflow is downloaded and compiled as part of deployment using options selected in the Resource Manager schema.
 
 ## Deployment customization
-
-The schema file offers an advanced deployment options.   When enabled you can select which airflow libraries are installed during deployment, choose which executor you want to use, and customize other deployment parameters for metadata database, security, and high availability.   Defaults are for SSH, Oracle, and MySQL. Note that the apache-airflow[mysql] package is required for installation.   If disabled this will result in a deployment failure.
+The schema file offers advanced deployment options.   When enabled you can select which airflow libraries are installed during deployment, choose which executor you want to use, and customize other deployment parameters for metadata database and web UI security.   Default libraries are for SSH, Oracle, and MySQL. Note that the apache-airflow[mysql] package is required for installation.   If disabled this will result in a deployment failure.
 
 ## Metadata Database
 
@@ -27,10 +26,9 @@ This deploys a MySQL DB instance on OCI and uses it for metadata in Airflow.  Yo
 *In Development*
 
 ### oracle
-*In Development* - This requires some updates to Alembic to work properly.
+*In Development* - This requires some updates to Alembic to work properly, bootstrapping the database currently fails.
 
 ## Celery for parallelized execution
-
 This template also supports celery executor to parallelize execution among multiple workers.  If using celery and pre-existing VCN/Subnet, ensure a security list entry is present allowing TCP 5555 ingress/egress for the Flower UI on the Airflow master.
 
 See the Security section below for detail on synchronization of Fernet Key among cluster hosts.
@@ -39,11 +37,10 @@ See the Security section below for detail on synchronization of Fernet Key among
 OCI Filesystem Service is offered when using celery.   Enabling this will create an NFS mount on each host in the cluster for `/opt/airflow/dags`.  This provides a single location to manage DAGs in the cluster, and ensures any changes will be in sync among all cluster hosts.
 
 ## OCI Hooks, Operators, Sensors
-
-This template automatically downloads and installs hooks, operators, and sensors for OCI services into `/opt/airflow/plugins`.   These plugins are fetched remotely by the airflow master instance from this github repository using `wget` as part of the CloudInit deployment.   Long term these hooks, operators and sensors will be committed upstream to Apache Airflow and be included as part of the native deployment.
+This template automatically downloads and installs hooks, operators, and sensors for OCI services into `/opt/airflow/plugins`.   These plugins are fetched remotely by the airflow master instance from this github repository using `wget` as part of the CloudInit deployment.   Long term these hooks, operators and sensors will be committed upstream to Apache Airflow and be included as part of the native deployment.  When using Celery, workers will also fetch these files during deployment.  When using FSS, example Dags are only fetched by the Master host - otherwise all hosts will also download these to `/opt/airflow/dags`.
 
 ## Security
-[Instance Principals](https://docs.cloud.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm) needs to be enabled for all functionality below.  This is offered as part of deployment, but you may need to have your tenancy administrator enable policies for you if you don't have privileges to the tenancy root.
+[Instance Principals](https://docs.cloud.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm) needs to be enabled for all functionality below.  This is offered as part of deployment, but you may need to have your tenancy administrator enable policies for you if you don't have privileges to the tenancy root. 
 
 This template offers basic [Airflow security](https://airflow.apache.org/docs/stable/security.html) when deploying using ORM.   Click Advanced Options > Enable Security to enable local password auth for the Airflow UI.   The password for this needs to be setup in OCI Secrets Vault prior to deployment.
 
@@ -60,13 +57,13 @@ The Secrets Vault should be in the same compartment where you are deploying Airf
 * AirflowDBPassword - Password for the Metadata Database (not useed in mysql-local)
 
 ## Logging
-
 Deployment activities are logged to `/var/log/OCI-airflow-initialize.log`
 
-This should provide some detail on installation process.  Note that the Airflow UI is not immediately available after Terraform deployment, as the binaries are compiled as part of deployment.   Watching the log file will tell you when the deployment is complete and the Airflow UI is available.
+This should provide some detail on installation process.  Note that the Airflow UI is not immediately available, as the binaries are compiled as part of deployment.   Watching the log file will tell you when the deployment is complete and the Airflow UI is available:
+
+`sudo tail -f /var/log/OCI-airflow-initialize.log`
 
 ## SystemD 
-
 There are daemon scripts setup as part of deployment.  Airflow can be controlled using systemd commands:
 
 	systemctl (start|stop|status|restart) airflow-webserver
