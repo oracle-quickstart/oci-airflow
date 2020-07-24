@@ -62,10 +62,6 @@ variable "enable_security" {
   default = "false"
 }
 
-variable "enable_scheduler_ha" {
-  default = "false"
-}
-
 variable "mysqladmin_password" {
   default = ""
 }

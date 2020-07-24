@@ -32,7 +32,6 @@ groupings:
   - ${enable_security}
   - ${executor}
   - ${enable_fss}
-  - ${enable_scheduler_ha}
   - ${airflow_database}
   - ${masterSubnet}
 - title: "OCI MySQL"
@@ -290,19 +289,6 @@ variables:
     description: "Enable security for Airflow web UI.   This requires use of Instance Principals, and values for AirflowLogin  and AirflowPassword will need to be present as Vault Secrets to leverage this functionality at deployment time.  See https://github.com/oracle-quickstart/oci-airflow#security"
     default: false
     visible: ${airflow_options}
-
-  enable_scheduler_ha:
-    type: boolean
-    title: "Enable Scheduler High Availability"
-    description: "Enable to provision a secondary Airflow master, which will act as a fail-over.  Useful for production deployments where you want enhanced high availability."
-    default: false
-    visible:
-      and:
-        - ${airflow_options}
-        - not:
-          - eq:
-            - ${executor}
-            - "local"
 
   executor:
     type: enum
