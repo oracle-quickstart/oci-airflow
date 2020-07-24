@@ -10,7 +10,6 @@ resource "oci_mysql_mysql_db_system" "airflow_database" {
     backup_policy {
     is_enabled        = "${var.enable_mysql_backups}"
     retention_in_days = "10"
-    window_start_time = "01:00-00:00"
     }
     description = "Airflow Database"
     ip_address    = "${var.oci_mysql_ip}"

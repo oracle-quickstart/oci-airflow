@@ -251,7 +251,7 @@ variables:
 
   VPC_CIDR:
     type: string
-    title: "CIDR for VCN"
+    title: "VPC CIDR for VCN"
     description: "Customize VCN top level CIDR"
 
   vcn_dns_label:
