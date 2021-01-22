@@ -22,8 +22,6 @@ The schema file offers advanced deployment options.   When enabled you can selec
 This template uses a community edition of MySQL for Airflow metadata.   This is downloaded and installed during provisioning.   The default root database password is set in the [master_boot.sh](https://github.com/oracle-quickstart/oci-airflow/blob/master/scripts/master_boot.sh#L256) which is run in CloudInit.  It's highly suggested you change the password either prior to deployment, or afterwards to something more secure.
 
 ### mysql-oci
-*In-Development*
-
 This deploys a MySQL DB instance on OCI and uses it for metadata in Airflow.  You will need to set some Secret Vault values prior to deployment for this to work, see the Security section below.
 
 ### oracle
