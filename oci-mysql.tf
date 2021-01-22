@@ -6,7 +6,7 @@ module "oci-mysql" {
   mysqladmin_username = "${var.mysqladmin_username}"
   compartment_ocid = "${var.compartment_ocid}"
   mysql_shape = "${var.mysql_shape}"
-  subnet_id =  "${var.useExistingVcn ? var.masterSubnet : module.network.public-id}"
+  subnet_id =  "${var.useExistingVcn ? var.clusterSubnet : module.network.private-id}"
   enable_mysql_backups = "${var.enable_mysql_backups}"
   oci_mysql_ip = "${var.oci_mysql_ip}"
 }

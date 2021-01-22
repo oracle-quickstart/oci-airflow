@@ -354,7 +354,7 @@ variables:
   mysqladmin_password:
     type: password
     title: "OCI MySQL password"
-    description: "Enter a password for the MySQL database user"
+    description: "The password for the administrative user. The password must be between 8 and 32 characters long, and must contain at least 1 numeric character, 1 lowercase character, 1 uppercase character, and 1 special (nonalphanumeric) character."
     visible: 
       and:
         - ${airflow_options}
