@@ -39,6 +39,7 @@ class OCIDataFlowRun(BaseOperator):
     :param display_name: Data Flow App Name
     :param oci_conn_id: Airflow Connection ID
     :param bucket_name: Application Bucket Name
+    :param arguments: Arguments
     :param parameters: Parameters
     :param driver_shape: Spark Driver Shape
     :param executor_shape: Spark Executor Shape
@@ -58,6 +59,7 @@ class OCIDataFlowRun(BaseOperator):
             oci_conn_id: str,
             bucket_name: Optional[str] = None,
             application_ocid: Optional = None,
+            arguments: Optional = None,
             parameters: Optional = None,
             driver_shape: Optional = None,
             executor_shape: Optional = None,
@@ -79,6 +81,7 @@ class OCIDataFlowRun(BaseOperator):
         self.display_name = display_name
         self.oci_conn_id = oci_conn_id
         self.bucket_name = bucket_name
+        self.arguments= arguments
         self.parameters = parameters
         self.driver_shape = driver_shape
         self.executor_shape = executor_shape
@@ -122,6 +125,7 @@ class OCIDataFlowRun(BaseOperator):
             "driver_shape": self.driver_shape,
             "warehouse_bucket_uri": self.warehouse_bucket_uri,
             "logs_bucket_uri": self.logs_bucket_uri,
+            "arguments": self.arguments,
             "parameters": self.parameters,
         }
         if self.runtime_callback is not None:
@@ -161,6 +165,7 @@ class OCIDataFlowCreateApplication(BaseOperator):
     :param display_name: Data Flow App Name
     :param oci_conn_id: Airflow Connection ID
     :param bucket_name: Application Bucket Name
+    :param arguments: Arguments
     :param parameters: Parameters
     :param driver_shape: Spark Driver Shape
     :param executor_shape: Spark Executor Shape
@@ -181,6 +186,7 @@ class OCIDataFlowCreateApplication(BaseOperator):
             object_name: str,
             language: str,
             file_uri: Optional[str] = None,
+            arguments: Optional = None,
             parameters: Optional = None,
             driver_shape: Optional = None,
             executor_shape: Optional = None,
@@ -200,6 +206,7 @@ class OCIDataFlowCreateApplication(BaseOperator):
         self.object_name = object_name
         self.language = language
         self.file_uri = file_uri
+        self.arguments = arguments
         self.parameters = parameters
         self.driver_shape = driver_shape
         self.executor_shape = executor_shape
