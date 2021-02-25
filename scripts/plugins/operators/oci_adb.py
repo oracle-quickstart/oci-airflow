@@ -21,7 +21,7 @@ import gzip
 import pandas as pd
 from typing import Optional
 from hooks.oci_adb import OCIDBHook
-from airflow.operators import BaseOperator
+from airflow.models.baseoperator import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from airflow.exceptions import AirflowException
 
