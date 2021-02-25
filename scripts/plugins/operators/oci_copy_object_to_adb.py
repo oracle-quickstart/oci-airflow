@@ -20,7 +20,7 @@ import pandas as pd
 from typing import Optional
 from hooks.oci_adb import OCIDBHook
 from hooks.oci_object_storage import OCIObjectStorageHook
-from airflow.operators import BaseOperator
+from airflow.models.baseoperator import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from airflow.exceptions import AirflowException
 
