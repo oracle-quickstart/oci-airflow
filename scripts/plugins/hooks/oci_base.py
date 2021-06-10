@@ -79,6 +79,14 @@ class OCIBaseHook(BaseHook):
                         self.client_kwargs = dict()
                     else:
                         raise AirflowException('Config Path %s not found' % extra_config["config_path"])
+                elif "service_principal" in extra_config:
+                    self.log.debug("Attempting to use service principal")
+                    self.signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner(dict(purpose="SERVICE_PRINCIPAL"))
+                    self.client_kwargs = dict(signer=self.signer)
+                    self.config = {
+                        "tenancy": self.signer.tenancy_id,
+                        "region": self.signer.region,
+                    }
                 else:
                     self.log.info("Failed to find valid oci config in Airflow, falling back to Instance Principals")
                     self.signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
