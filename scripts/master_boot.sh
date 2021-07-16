@@ -250,12 +250,12 @@ if [ $enable_fss = "true" ]; then
 	mkdir -p /opt/airflow/dags
 	mount ${nfs_ip}:/airflow /opt/airflow/dags >> $LOG_FILE
 fi
-if [ $airflow_database = "mysql-local" ]; then 
 EXECNAME="MySQL DB"
 log "->Install"
 wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
 rpm -ivh mysql-community-release-el7-5.noarch.rpm >> $LOG_FILE
 yum install mysql-server mysql-community-devel -y >> $LOG_FILE
+if [ $airflow_database = "mysql-local" ]; then 
 log "->Tuning"
 head -n -6 /etc/my.cnf >> /etc/my.cnf.new
 mv /etc/my.cnf /etc/my.cnf.rpminstall
@@ -326,7 +326,11 @@ if [ $airflow_database != "msyql-local" ]; then
 		unzip /home/airflow/wallet.zip -d /home/airflow >> $LOG_FILE
 		export TNS_ADMIN=/home/airflow
 		log "->Relocalize sqlnet.ora"
-		sed -i 's/DIRECTORY=\"?\/network\/admin\"/DIRECTORY=\"\/home\/airflow\"/g' /home/airflow/sqlnet.ora 
+		sed -i 's/DIRECTORY=\"?\/network\/admin\"/DIRECTORY=\"\/home\/airflow\"/g' /home/airflow/sqlnet.ora
+	else
+		log "->Bootstrap OCI MySQL"
+		mysql --host ${oci_mysql_ip} -u ${airflowdb_admin} -p${airflowdb_password} -e "CREATE DATABASE AIRFLOW"
+		mysql --host ${oci_mysql_ip} -u ${airflowdb_admin} -p${airflowdb_password} -e "GRANT ALL ON AIRFLOW.* TO 'airflow'@'%' IDENTIFIED BY '${airflowdb_password}'"
 	fi
 fi
 log "->Install Oracle Instantclient"
@@ -399,8 +403,8 @@ if [ $airflow_database = "mysql-local" ]; then
 	airflow initdb >> $LOG_FILE
 elif [ $airflow_database = "mysql-oci" ]; then 
         log "->Configure MySQL connection"
-        sed -i "s/sqlite:\/\/\/\/opt\/airflow\/airflow.db/mysql:\/\/${airflowdb_admin}:${airflowdb_password}@${oci_mysql_ip}\/AIRFLOW/g" /opt/airflow/airflow.cfg >> $LOG_FILE
-        sed -i "s/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/airflow/result_backend = db+mysql:\/\/${airflowdb_admin}:${airflowdb_password}@${oci_mysql_ip}:3306\/AIRFLOW/g" /opt/airflow/airflow.cfg >> $LOG_FILE
+        sed -i "s/sqlite:\/\/\/\/opt\/airflow\/airflow.db/mysql:\/\/airflow:${airflowdb_password}@${oci_mysql_ip}\/AIRFLOW/g" /opt/airflow/airflow.cfg >> $LOG_FILE
+        sed -i "s/result_backend = db+mysql:\/\/airflow:airflow@localhost:3306\/airflow/result_backend = db+mysql:\/\/airflow:${airflowdb_password}@${oci_mysql_ip}:3306\/AIRFLOW/g" /opt/airflow/airflow.cfg >> $LOG_FILE
         log "->InitDB MySQL-OCI"
         airflow initdb >> $LOG_FILE
 elif [ $airflow_database = "oracle" ]; then 
