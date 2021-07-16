@@ -1,6 +1,6 @@
 # DEPRECATED
 
-Note that use of this repository is deprecated in favor of [OKE-Airflow](https://github.com/oracle-qickstart/oke-airflow).   This is primarily due to lack of scheduler HA in an IaaS deployment of Airflow, along with the flexibility you get by using KubernetesExecutor for DAG execution, which is a much more efficient use of resources.
+Note that use of this repository is deprecated in favor of [OKE-Airflow](https://github.com/oracle-quickstart/oke-airflow).   This is primarily due to lack of scheduler HA in an IaaS deployment of Airflow, along with the flexibility you get by using KubernetesExecutor for DAG execution, which is a much more efficient use of resources.
 
 # OCI-Airflow
 [Apache Airflow](https://airflow.apache.org/) on Oracle Cloud Infrastructure
