@@ -58,7 +58,7 @@ class MakeBucket(BaseOperator):
 
     def execute(self, context, **kwargs):
         self._oci_hook = OCIObjectStorageHook(compartment_id=self.compartment_id, bucket_name=self.bucket_name,
-                                              oci_conn_id=self.oci_conn_id)
+                                              oci_conn_id=self.oci_conn_id, namespace_name=self.namespace_name)
         client = self._oci_hook.get_client(self.oci_client)
         self.log.info("Validating OCI Config")
         self._oci_hook.validate_config()
