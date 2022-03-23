@@ -28,6 +28,8 @@ class OCIObjectStorageHook(OCIBaseHook):
     :type compartment_id: str
     :param bucket_name: Target bucket name
     :type bucket_name: str
+    :param namespace_name: Namespace name
+    :type namespace_name: str
     :param oci_conn_id: Airflow connection ID
     :type oci_conn_id: str
     :param args: Additional arguments
@@ -36,6 +38,7 @@ class OCIObjectStorageHook(OCIBaseHook):
     def __init__(self,
                  compartment_id: str,
                  bucket_name: Optional[str] = None,
+                 namespace_name: Optional[str] = None,
                  oci_conn_id: Optional[str] = "oci_default",
                  *args,
                  **kwargs):
@@ -43,6 +46,7 @@ class OCIObjectStorageHook(OCIBaseHook):
         self.bucket_name = bucket_name
         self.oci_conn_id = oci_conn_id
         self.compartment_id = compartment_id
+        self.namespace_name = namespace_name
         self.oci_client = oci.object_storage.ObjectStorageClient
 
     def get_namespace(self, compartment_id=None):
