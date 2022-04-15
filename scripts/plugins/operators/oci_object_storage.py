@@ -185,6 +185,7 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
         put_object_body: str,
         namespace_name: Optional[str] = None,
         oci_conn_id: Optional[str] = "oci_default",
+        overwrite: Optional[bool] = False,
         *args,
         **kwargs
     ) -> None:
@@ -195,6 +196,7 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
         self.object_name = object_name
         self.put_object_body = put_object_body
         self.oci_conn_id = oci_conn_id
+        self.overwrite = overwrite
         self._oci_hook = None
         self.oci_client = oci.object_storage.ObjectStorageClient
 
@@ -221,7 +223,12 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
         object_exists = self._oci_hook.check_for_object(namespace_name=self.namespace_name, bucket_name=self.bucket_name,
                                                         object_name=self.object_name)
         if object_exists is True:
-            self.log.info("Object {0} exists already in {1}".format(self.object_name, self.bucket_name))
+            if self.overwrite is True:
+                self.log.info("Copying {0} to {1}".format(self.object_name, self.bucket_name))
+                self._oci_hook.copy_to_bucket(bucket_name=self.bucket_name, namespace_name=self.namespace_name,
+                                              object_name=self.object_name, put_object_body=self.put_object_body, **kwargs)
+            else:
+                self.log.info("Object {0} exists already in {1}".format(self.object_name, self.bucket_name))
         else:
             self.log.info("Copying {0} to {1}".format(self.object_name, self.bucket_name))
             self._oci_hook.copy_to_bucket(bucket_name=self.bucket_name, namespace_name=self.namespace_name,
