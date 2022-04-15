@@ -93,6 +93,8 @@ class CopyFileToOCIObjectStorageOperator(BaseOperator):
     :type namespace_name: str
     :param oci_conn_id: Airflow connection ID
     :type oci_conn_id: str
+    :param overwrite: Overwrite files if they exist
+    :type overwrite: bool
     """
 
     @apply_defaults
@@ -192,6 +194,8 @@ class CopyToOCIObjectStorageOperator(BaseOperator):
     :type namespace_name: str
     :param oci_conn_id: Airflow connection ID
     :type oci_conn_id: str
+    :param overwrite: Overwrite files if they exist
+    :type overwrite: bool
     """
 
     @apply_defaults
