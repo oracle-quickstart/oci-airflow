@@ -115,6 +115,7 @@ class CopyFileToOCIObjectStorageOperator(BaseOperator):
         self.object_name = object_name
         self.local_file_path = local_file_path
         self.oci_conn_id = oci_conn_id
+        self.overwrite = overwrite
         self._oci_hook = None
         self.oci_client = oci.object_storage.ObjectStorageClient
 
