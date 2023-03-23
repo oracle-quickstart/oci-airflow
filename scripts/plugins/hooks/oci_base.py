@@ -49,7 +49,7 @@ class OCIBaseHook(BaseHook):
                  oci_conn_id: Optional[str] = "oci_default",
                  verify: Optional[bool] = None
     ):
-       super(OCIBaseHook, self).__init__(oci_conn_id)
+       super(OCIBaseHook, self).__init__()
        self.oci_conn_id = oci_conn_id
        self.config = None
        self.client_kwargs = None
